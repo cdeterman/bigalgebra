@@ -7,5 +7,4 @@ exportMethods("Math")
 exportMethods("qr")
 #Functions
 export("daxpy")
-export("dacl")
 useDynLib(bigalgebra)
