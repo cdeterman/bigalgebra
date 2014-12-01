@@ -1,4 +1,5 @@
 #include <string>
+#include <iostream>
 #include "bigmemory/BigMatrix.h"
 
 #include <R.h>
@@ -13,6 +14,13 @@
 #define INT int
 #endif
 
+// Declare LAPACK functions
+extern "C"
+{
+  void dgeqrf_ (int *M, int *N, double *Y, int *LDA, double *TAU,
+                    double *WORK, int *LWORK, int *INFO); 
+}
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -25,7 +33,11 @@ extern "C"
                       SEXP BETA, SEXP C, SEXP LDC, SEXP A_isBM, SEXP B_isBM,
                       SEXP C_isBM, SEXP C_offset);
   SEXP daxpy_wrapper (SEXP N, SEXP A, SEXP X, SEXP Y, SEXP X_isBM);
-  SEXP dadd(SEXP N, SEXP ALPHA, SEXP Y, SEXP Y_isBM, SEXP SIGN, SEXP ALPHA_LHS);
+  SEXP dgeqrf_wrapper (SEXP M, SEXP N, SEXP Y, SEXP LDA, SEXP TAU, SEXP WORK,
+                        SEXP LWORK, SEXP INFO, SEXP A_isBM, SEXP TAU_isBM, 
+                        SEXP WORK_isBM);
+  //SEXP dadd(SEXP N, SEXP ALPHA, SEXP Y, SEXP Y_isBM, SEXP SIGN, SEXP ALPHA_LHS);
+  SEXP dacl(SEXP N, SEXP Y, SEXP Y_isBM);
 
 #ifdef __cplusplus
 }
@@ -161,6 +173,13 @@ daxpy_wrapper (SEXP N, SEXP A, SEXP X, SEXP Y, SEXP X_isBM)
 
 // Note that the following two functions should be updated to use
 // the proper BLAS functions.
+
+/* Note, I am not certain that this function is necessary.
+ * Currently, modified to have a scalar converted to a big.matrix
+ * in order to use daxpy
+ */
+
+/*
 SEXP
 dadd(SEXP N, SEXP ALPHA, SEXP Y, SEXP Y_isBM, SEXP SIGN, SEXP ALPHA_LHS) {
   SEXP ans;
@@ -186,5 +205,70 @@ dadd(SEXP N, SEXP ALPHA, SEXP Y, SEXP Y_isBM, SEXP SIGN, SEXP ALPHA_LHS) {
     }
   }
   unprotect(1);
+  return ans;
+}
+*/
+
+
+// Unsure if there is a 'proper' BLAS function for logs
+// common logarithm
+SEXP
+dacl(SEXP N, SEXP Y, SEXP Y_isBM) {
+  SEXP ans;
+  double *pY;
+  INT NN = (INT) * (DOUBLE_DATA(N));
+  pY = make_double_ptr(Y, Y_isBM);
+  PROTECT(ans = Y);
+ 
+  for (INT i=0; i < NN; ++i)
+  {
+    pY[i] = log10(pY[i]);
+  }
+  
+  unprotect(1);
+  return ans;
+}
+
+
+/* Compute the QR decomposition of a big.matrix
+ * Y must be a big.matrix, X can be an R vector or big.matrix.
+ * The contents of Y are *replaced* by this routine and a reference
+ * to Y is returned.
+ */
+SEXP
+dgeqrf_wrapper (SEXP M, SEXP N, SEXP Y, SEXP LDA, SEXP TAU, SEXP WORK,
+                SEXP LWORK, SEXP INFO, SEXP A_isBM, SEXP TAU_isBM, 
+                SEXP WORK_isBM)
+{
+  SEXP ans, Tr;
+  double *pY;
+  double *pTAU = make_double_ptr (TAU, TAU_isBM);
+  double *pWORK = make_double_ptr (WORK, WORK_isBM);
+  INT NN = (INT) * (DOUBLE_DATA (N));
+  INT MM = (INT) * (DOUBLE_DATA (M));
+  INT LDAi = (INT) * (DOUBLE_DATA (LDA));
+  INT LWORKi = (INT) * (DOUBLE_DATA (LWORK));
+  INT INFOi = (INT) * (DOUBLE_DATA (INFO));
+  
+  PROTECT(ans = Y);
+  PROTECT(Tr = allocVector(LGLSXP, 1));
+  LOGICAL(Tr)[0] = 1;
+  pY = make_double_ptr (Y, Tr);
+  
+/* C-blas and REFBLAS untested
+/* An example of an alternate C-blas interface (e.g., ACML) */
+#ifdef CBLAS
+  dgeqrf (MM, NN, pY, LDAi, pTAU, pWORK, LWORKi, INFOi);
+#elif REFBLAS
+  std::cout << "refblas used" << std::endl;
+/* Standard Fortran interface without underscoring */
+  int8_dgeqrf (&MM, &NN, pY, &LDAi, pTAU, pWORK, &LWORKi, &INFOi);
+#else
+/* Connect to LAPACK Fortran interface
+ * The function is declared at start of this file
+ */
+  dgeqrf_ (&MM, &NN, pY, &LDAi, pTAU, pWORK, &LWORKi, &INFOi);
+#endif
+  unprotect(2);
   return ans;
 }

@@ -3,8 +3,9 @@ importFrom("bigmemory", "typeof")
 #S4 methods
 exportMethods("%*%")
 exportMethods("Arith")
+exportMethods("Math")
+exportMethods("qr")
 #Functions
 export("daxpy")
-export("dadd")
+export("dacl")
 useDynLib(bigalgebra)
-

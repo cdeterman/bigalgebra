@@ -69,8 +69,8 @@ setMethod("Arith",c(e1="numeric", e2="big.matrix"),
       if (op=="*") 
         return(daxpy(e1,e2))
       return(switch(op,
-        `+` = dadd(e2, e1, 1.0, 1),
-        `-` = dadd(e2, e1,-1.0, 1),
+        `+` = daxpy(1.0,e2,e1),
+        `-` = daxpy(-1.0,e2,e1),
         stop("Undefined operation")
       ))
     }
@@ -85,11 +85,28 @@ setMethod("Arith",c(e1="big.matrix", e2="numeric"),
       if( op=="*") 
         return(daxpy(e2,e1))
       return(switch(op,
-        `+` = dadd(e1,e2, 1.0, 0),
-        `-` = dadd(e1,e2, -1.0, 0),
+        `+` = daxpy(1.0,e1,e2),
+        `-` = daxpy(-1.0,e1,e2, 0),
         stop("Undefined operation")
       ))
     }
     stop("e2 is not a scalar")
   }
 )
+
+setMethod("Math", c(x="big.matrix"),
+          function(x)
+          {
+            op = .Generic[[1]]
+            switch(op,
+                   `log10` = dacl(x),
+                   stop("Undefined operation")
+            )
+          }
+)
+
+setMethod("qr", c(x="big.matrix"),
+          function(x, ...)
+            {
+            dgeqrf(x)
+          })

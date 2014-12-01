@@ -58,30 +58,86 @@ dgemm = function(TRANSA='N', TRANSB='N', M=NULL, N=NULL, K=NULL,
 # X is a dimension-less R vector, returns a column. Returned value type
 # depends on the arguments and the value of the option
 # options("bigalgebra.mixed_airthmetic_returns_R_matrix")[[1]].
-daxpy = function(A=1, X, Y)
+daxpy = function(A=1, X, Y, LHS=1)
 {
   mixed = FALSE
   X.is.bm = check_matrix(X,classes=c('big.matrix','matrix','vector','numeric'))
+  
+  if(!class(X) %in% c('big.matrix', 'matrix', 'vector')){
+    X.bm <- big.matrix(nrow(Y), ncol(Y), type="double", init=X)
+  }else{
+    X.bm <- X
+  }
+  
+  if(!class(Y) %in% c('big.matrix', 'matrix', 'vector')){
+    Y.bm <- big.matrix(nrow(X), ncol(X), type="double", init=Y)
+  }else{
+    Y.bm <- Y
+  }
+  
 # default to a column big matrix output
-  M = length(X)
+  M = length(X.bm)
   L = M
   N = 1L
-  D = dim(X)
+  D = dim(X.bm)
   if(!is.null(D) && length(D)==2)
   {
     M = D[1]
     N = D[2]
   }
   Z = anon_matrix(M,N,val=0.0)
-  if(!missing(Y))
+
+  if(!missing(Y.bm))
   {
-# Check conformity of Y and duplicate
-    if(length(Y)!=length(X)) stop("Lengths of X and Y must match")
-    mixed = (X.is.bm != check_matrix(Y,classes=c('big.matrix','matrix','vector','numeric')))
-    Z[] = Y[]
+    # Check conformity of Y and duplicate
+    if(length(Y.bm)!=length(X.bm)) stop("Lengths of X and Y must match")
+    mixed = (X.is.bm != check_matrix(Y.bm,classes=c('big.matrix','matrix','vector','numeric')))
+    Z[] = Y.bm[]
   }
-  ans = .Call("daxpy_wrapper", as.double(L), as.double(A), X, Z, X.is.bm,
-              PACKAGE="bigalgebra")
+
+  # current workaround with subtracting scalar from big.matrix
+  if(LHS == 0){
+    W <- anon_matrix(M, N, val=0.0)
+    W[] <- X.bm[]
+    ans = .Call("daxpy_wrapper", as.double(L), as.double(A), Z, W, X.is.bm,
+                PACKAGE="bigalgebra")
+  }else{
+    ans = .Call("daxpy_wrapper", as.double(L), as.double(A), X.bm, Z, X.is.bm,
+                PACKAGE="bigalgebra")
+  }
+  
   if(mixed) return(ans[])
   ans
+}
+
+
+dgeqrf = function(A)
+{
+  A.is.bm = check_matrix(A,classes=c('big.matrix','matrix','vector','numeric'))
+  
+  # default to a column big matrix output
+  M = length(A)
+  L = M
+  N = 1L
+  D = dim(A)
+  if(!is.null(D) && length(D)==2)
+  {
+    M = D[1]
+    N = D[2]
+  }
+  TAU = as.matrix(rep(0.0, min(M,N)))
+  LWORK = max(1, N)
+  WORK = as.matrix(rep(0.0, max(1, LWORK)))
+  INFO=0
+  Y = deepcopy(A, backingfile="")
+  
+  A.is.bm = check_matrix(A)
+  TAU.is.bm = check_matrix(TAU)
+  WORK.is.bm = check_matrix(WORK)
+
+  ans = .Call("dgeqrf_wrapper", as.double(M), as.double(N), Y, LDA=as.double(M), 
+              as.double(TAU), as.double(WORK), as.double(LWORK), as.double(INFO),
+              as.logical(A.is.bm), as.logical(TAU.is.bm), as.logical(WORK.is.bm),
+                PACKAGE="bigalgebra")
+  return(ans)
 }

@@ -39,28 +39,29 @@ dcopy = function(N=NULL, X, INCX=1, Y, INCY=1)
 
 # Add a scalar to each element of a matrix
 # Y := Y+SIGN*ALPHA 
-dadd = function(Y, ALPHA, SIGN=1, ALPHA_LHS=1)
-{
-  if (!is.numeric(ALPHA) || length(ALPHA) != 1)
-    stop("ALPHA is not a scalar numeric value")
-  Y.is.bm = check_matrix(Y)
-  if (Y.is.bm) {
-    ret = deepcopy(Y, backingfile="")
-  } else {
-    ret = Y
-  }
-  N = as.double(nrow(Y)) * as.double(ncol(Y))
-  .Call('dadd', N, as.double(ALPHA), ret, Y.is.bm, as.double(SIGN), 
-        as.integer(ALPHA_LHS))
-  return(ret)
-}
+# dadd = function(Y, ALPHA, SIGN=1, ALPHA_LHS=1)
+# {
+#   if (!is.numeric(ALPHA) || length(ALPHA) != 1)
+#     stop("ALPHA is not a scalar numeric value")
+#   Y.is.bm = check_matrix(Y)
+#   if (Y.is.bm) {
+#     ret = deepcopy(Y, backingfile="")
+#   } else {
+#     ret = Y
+#   }
+#   N = as.double(nrow(Y)) * as.double(ncol(Y))
+#   .Call('dadd', N, as.double(ALPHA), ret, Y.is.bm, as.double(SIGN), 
+#         as.integer(ALPHA_LHS))
+#   return(ret)
+# }
 
 # Add two matrices.
 # Y := ALPHA * X + Y
 daxpy = function(N=NULL, ALPHA=1, X, INCX=1, Y, INCY=1)
-{
-  X.is.bm = check_matrix(X)
+{  
   Y.is.bm = check_matrix(Y)
+  X.is.bm = check_matrix(X)
+  
   if (is.null(N))
   {
     N = as.double(nrow(X))*as.double(ncol(X))
@@ -69,6 +70,22 @@ daxpy = function(N=NULL, ALPHA=1, X, INCX=1, Y, INCY=1)
     Y, as.double(INCY), X.is.bm, Y.is.bm)
   return(0)
 }
+
+# Common log of matrix elements
+# Y := LOG10(Y)
+dacl = function(Y)
+{
+  Y.is.bm = check_matrix(Y)
+  if(Y.is.bm) {
+    ret = deepcopy(Y, backingfile="")
+  } else {
+    ret = Y
+  }
+  N = as.double(nrow(Y)) * as.double(ncol(Y)) 
+  .Call('dacl', N, ret, Y.is.bm)
+  return(ret)
+}
+
 
 # Matrix Multiply
 # C := ALPHA * op(A) * op(B) + BETA * C
@@ -139,10 +156,18 @@ dgeqrf=function(M=NULL, N=NULL, A, LDA=NULL, TAU=NULL, WORK=NULL,
   TAU.is.bm = check_matrix(TAU)
   WORK.is.bm = check_matrix(WORK)
   INFO = 0
-  .Call('dgeqrf_wrapper', as.double(M), as.double(N), A, as.double(LDA), 
+  
+  Y.is.bm = check_matrix(Y)
+  if(A.is.bm) {
+    ret = deepcopy(A, backingfile="")
+  } else {
+    ret = A
+  }
+  
+  .Call('dgeqrf_wrapper', as.double(M), as.double(N), ret, as.double(LDA), 
     TAU, WORK, as.double(LWORK), as.double(INFO), A.is.bm, TAU.is.bm, 
     WORK.is.bm)
-  return(INFO) 
+  return(ret)
 }
 
 # Cholesky factorization
