@@ -1,5 +1,6 @@
 #include <string>
 #include <iostream>
+#include <cmath>
 #include "bigmemory/BigMatrix.h"
 
 #include <R.h>
@@ -37,7 +38,12 @@ extern "C"
                         SEXP LWORK, SEXP INFO, SEXP A_isBM, SEXP TAU_isBM, 
                         SEXP WORK_isBM);
   //SEXP dadd(SEXP N, SEXP ALPHA, SEXP Y, SEXP Y_isBM, SEXP SIGN, SEXP ALPHA_LHS);
-  SEXP dacl(SEXP N, SEXP Y, SEXP Y_isBM);
+  
+  // Define trignometric functions
+  SEXP dgeclog(SEXP N, SEXP Y, SEXP Y_isBM);
+  SEXP dgecosh(SEXP N, SEXP Y, SEXP Y_isBM);
+  SEXP dgetanh(SEXP N, SEXP Y, SEXP Y_isBM);
+  SEXP dgesinh(SEXP N, SEXP Y, SEXP Y_isBM);
 
 #ifdef __cplusplus
 }
@@ -210,25 +216,6 @@ dadd(SEXP N, SEXP ALPHA, SEXP Y, SEXP Y_isBM, SEXP SIGN, SEXP ALPHA_LHS) {
 */
 
 
-// Unsure if there is a 'proper' BLAS function for logs
-// common logarithm
-SEXP
-dacl(SEXP N, SEXP Y, SEXP Y_isBM) {
-  SEXP ans;
-  double *pY;
-  INT NN = (INT) * (DOUBLE_DATA(N));
-  pY = make_double_ptr(Y, Y_isBM);
-  PROTECT(ans = Y);
- 
-  for (INT i=0; i < NN; ++i)
-  {
-    pY[i] = log10(pY[i]);
-  }
-  
-  unprotect(1);
-  return ans;
-}
-
 
 /* Compute the QR decomposition of a big.matrix
  * Y must be a big.matrix, X can be an R vector or big.matrix.
@@ -270,5 +257,78 @@ dgeqrf_wrapper (SEXP M, SEXP N, SEXP Y, SEXP LDA, SEXP TAU, SEXP WORK,
   dgeqrf_ (&MM, &NN, pY, &LDAi, pTAU, pWORK, &LWORKi, &INFOi);
 #endif
   unprotect(2);
+  return ans;
+}
+
+
+// Unsure if there is a 'proper' BLAS function for log and trig functions
+// common logarithm
+SEXP
+dgeclog(SEXP N, SEXP Y, SEXP Y_isBM) {
+  SEXP ans;
+  double *pY;
+  INT NN = (INT) * (DOUBLE_DATA(N));
+  pY = make_double_ptr(Y, Y_isBM);
+  PROTECT(ans = Y);
+ 
+  for (INT i=0; i < NN; ++i)
+  {
+    pY[i] = log10(pY[i]);
+  }
+  
+  unprotect(1);
+  return ans;
+}
+
+
+SEXP
+dgetanh(SEXP N, SEXP Y, SEXP Y_isBM) {
+  SEXP ans;
+  double *pY;
+  INT NN = (INT) * (DOUBLE_DATA(N));
+  pY = make_double_ptr(Y, Y_isBM);
+  PROTECT(ans = Y);
+ 
+  for (INT i=0; i < NN; ++i)
+  {
+    pY[i] = tanh(pY[i]);
+  }
+  
+  unprotect(1);
+  return ans;
+}
+
+
+SEXP
+dgecosh(SEXP N, SEXP Y, SEXP Y_isBM) {
+  SEXP ans;
+  double *pY;
+  INT NN = (INT) * (DOUBLE_DATA(N));
+  pY = make_double_ptr(Y, Y_isBM);
+  PROTECT(ans = Y);
+ 
+  for (INT i=0; i < NN; ++i)
+  {
+    pY[i] = cosh(pY[i]);
+  }
+  
+  unprotect(1);
+  return ans;
+}
+
+SEXP
+dgesinh(SEXP N, SEXP Y, SEXP Y_isBM) {
+  SEXP ans;
+  double *pY;
+  INT NN = (INT) * (DOUBLE_DATA(N));
+  pY = make_double_ptr(Y, Y_isBM);
+  PROTECT(ans = Y);
+ 
+  for (INT i=0; i < NN; ++i)
+  {
+    pY[i] = sinh(pY[i]);
+  }
+  
+  unprotect(1);
   return ans;
 }

@@ -71,21 +71,6 @@ daxpy = function(N=NULL, ALPHA=1, X, INCX=1, Y, INCY=1)
   return(0)
 }
 
-# Common log of matrix elements
-# Y := LOG10(Y)
-dacl = function(Y)
-{
-  Y.is.bm = check_matrix(Y)
-  if(Y.is.bm) {
-    ret = deepcopy(Y, backingfile="")
-  } else {
-    ret = Y
-  }
-  N = as.double(nrow(Y)) * as.double(ncol(Y)) 
-  .Call('dacl', N, ret, Y.is.bm)
-  return(ret)
-}
-
 
 # Matrix Multiply
 # C := ALPHA * op(A) * op(B) + BETA * C
@@ -312,4 +297,69 @@ dgesdd = function( JOBZ='A', M=NULL, N=NULL, A, LDA=NULL, S, U, LDU=NULL,
     as.double(LWORK), as.double(INFO), A.is.bm, S.is.bm, U.is.bm, VT.is.bm, 
     WORK.is.bm)
   return(INFO)
+}
+
+
+
+# Common log of matrix elements
+# Y := LOG10(Y)
+dgeclog = function(Y)
+{
+  Y.is.bm = check_matrix(Y)
+  if(Y.is.bm) {
+    ret = deepcopy(Y, backingfile="")
+  } else {
+    ret = Y
+  }
+  N = as.double(nrow(Y)) * as.double(ncol(Y)) 
+  .Call('dgeclog', N, ret, Y.is.bm)
+  return(ret)
+}
+
+
+# Hyperbolic sine of matrix elements
+# Y := SINH(Y)
+dgesinh = function(Y)
+{
+  Y.is.bm = check_matrix(Y)
+  if(Y.is.bm) {
+    ret = deepcopy(Y, backingfile="")
+  } else {
+    ret = Y
+  }
+  N = as.double(nrow(Y)) * as.double(ncol(Y)) 
+  .Call('dgesinh', N, ret, Y.is.bm)
+  return(ret)
+}
+
+
+# Hyperbolic cosine of matrix elements
+# Y := COSH(Y)
+dgecosh = function(Y)
+{
+  Y.is.bm = check_matrix(Y)
+  if(Y.is.bm) {
+    ret = deepcopy(Y, backingfile="")
+  } else {
+    ret = Y
+  }
+  N = as.double(nrow(Y)) * as.double(ncol(Y)) 
+  .Call('dgecosh', N, ret, Y.is.bm)
+  return(ret)
+}
+
+
+# Hyperbolic tangent of matrix elements
+# Y := TANH(Y)
+dgetanh = function(Y)
+{
+  Y.is.bm = check_matrix(Y)
+  if(Y.is.bm) {
+    ret = deepcopy(Y, backingfile="")
+  } else {
+    ret = Y
+  }
+  N = as.double(nrow(Y)) * as.double(ncol(Y)) 
+  .Call('dgetanh', N, ret, Y.is.bm)
+  return(ret)
 }

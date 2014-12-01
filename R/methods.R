@@ -99,7 +99,10 @@ setMethod("Math", c(x="big.matrix"),
           {
             op = .Generic[[1]]
             switch(op,
-                   `log10` = dacl(x),
+                   `log10` = dgeclog(x),
+                   `sinh` = dgesinh(x),
+                   `cosh` = dgecosh(x),
+                   `tanh` = dgetanh(x),
                    stop("Undefined operation")
             )
           }
