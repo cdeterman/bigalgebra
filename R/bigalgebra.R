@@ -45,7 +45,7 @@ dadd = function(Y, ALPHA, SIGN=1, ALPHA_LHS=1)
     stop("ALPHA is not a scalar numeric value")
   Y.is.bm = check_matrix(Y)
   if (Y.is.bm) {
-    ret = deepcopy(Y, backingfile="")
+    ret = deepcopy(Y)
   } else {
     ret = Y
   }
@@ -61,7 +61,7 @@ dgesmd = function(Y, ALPHA, ALPHA_LHS=0)
     stop("ALPHA is not a scalar numeric value")
   Y.is.bm = check_matrix(Y)
   if (Y.is.bm) {
-    ret = deepcopy(Y, backingfile="")
+    ret = deepcopy(Y)
   } else {
     ret = Y
   }
@@ -102,7 +102,7 @@ dgeemm = function(A, B)
   N = as.double(nrow(B)) * as.double(ncol(A)) 
   
   if(B.is.bm) {
-    C = deepcopy(B, backingfile="")
+    C = deepcopy(B)
   } else {
     C = B
   }
@@ -126,7 +126,7 @@ dgeemd = function(A, B)
   N = as.double(nrow(B)) * as.double(ncol(A)) 
   
   if(B.is.bm) {
-    C = deepcopy(B, backingfile="")
+    C = deepcopy(B)
   } else {
     C = B
   }
@@ -209,7 +209,7 @@ dgeqrf=function(M=NULL, N=NULL, A, LDA=NULL, TAU=NULL, WORK=NULL,
   
   Y.is.bm = check_matrix(Y)
   if(A.is.bm) {
-    ret = deepcopy(A, backingfile="")
+    ret = deepcopy(A)
   } else {
     ret = A
   }
@@ -373,7 +373,7 @@ dgepow = function(Y, EXP)
 {
   Y.is.bm = check_matrix(Y)
   if(Y.is.bm) {
-    ret = deepcopy(Y, backingfile="")
+    ret = deepcopy(Y)
   } else {
     ret = Y
   }
@@ -389,7 +389,7 @@ dgeclog = function(Y)
 {
   Y.is.bm = check_matrix(Y)
   if(Y.is.bm) {
-    ret = deepcopy(Y, backingfile="")
+    ret = deepcopy(Y)
   } else {
     ret = Y
   }
@@ -405,7 +405,7 @@ dgelog = function(Y, BASE)
 {
   Y.is.bm = check_matrix(Y)
   if(Y.is.bm) {
-    ret = deepcopy(Y, backingfile="")
+    ret = deepcopy(Y)
   } else {
     ret = Y
   }
@@ -421,7 +421,7 @@ dgeexp = function(Y)
 {
   Y.is.bm = check_matrix(Y)
   if(Y.is.bm) {
-    ret = deepcopy(Y, backingfile="")
+    ret = deepcopy(Y)
   } else {
     ret = Y
   }
@@ -437,7 +437,7 @@ dgesinh = function(Y)
 {
   Y.is.bm = check_matrix(Y)
   if(Y.is.bm) {
-    ret = deepcopy(Y, backingfile="")
+    ret = deepcopy(Y)
   } else {
     ret = Y
   }
@@ -453,7 +453,7 @@ dgecosh = function(Y)
 {
   Y.is.bm = check_matrix(Y)
   if(Y.is.bm) {
-    ret = deepcopy(Y, backingfile="")
+    ret = deepcopy(Y)
   } else {
     ret = Y
   }
@@ -469,7 +469,7 @@ dgetanh = function(Y)
 {
   Y.is.bm = check_matrix(Y)
   if(Y.is.bm) {
-    ret = deepcopy(Y, backingfile="")
+    ret = deepcopy(Y)
   } else {
     ret = Y
   }
