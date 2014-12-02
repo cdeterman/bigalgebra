@@ -254,12 +254,11 @@ dgeqrf_wrapper (SEXP M, SEXP N, SEXP Y, SEXP LDA, SEXP TAU, SEXP WORK,
   LOGICAL(Tr)[0] = 1;
   pY = make_double_ptr (Y, Tr);
   
-/* C-blas and REFBLAS untested
+/* C-blas and REFBLAS untested */
 /* An example of an alternate C-blas interface (e.g., ACML) */
 #ifdef CBLAS
   dgeqrf (MM, NN, pY, LDAi, pTAU, pWORK, LWORKi, INFOi);
 #elif REFBLAS
-  std::cout << "refblas used" << std::endl;
 /* Standard Fortran interface without underscoring */
   int8_dgeqrf (&MM, &NN, pY, &LDAi, pTAU, pWORK, &LWORKi, &INFOi);
 #else
@@ -398,7 +397,7 @@ dgeemd_wrapper (SEXP N, SEXP X, SEXP Y, SEXP Z, SEXP X_isBM, SEXP Y_isBM){
 }
 
 
-// common logarithm
+// Scalar-matrix division
 SEXP
 dgesmd_wrapper (SEXP N, SEXP A, SEXP Y, SEXP Y_isBM, SEXP ALPHA_LHS) {
   SEXP ans;
