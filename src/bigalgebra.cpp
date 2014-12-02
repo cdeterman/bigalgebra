@@ -15,6 +15,8 @@
 #define INT int
 #endif
 
+#define BLOCKSIZE (8)
+
 // Declare LAPACK functions
 extern "C"
 {
@@ -37,10 +39,18 @@ extern "C"
   SEXP dgeqrf_wrapper (SEXP M, SEXP N, SEXP Y, SEXP LDA, SEXP TAU, SEXP WORK,
                         SEXP LWORK, SEXP INFO, SEXP A_isBM, SEXP TAU_isBM, 
                         SEXP WORK_isBM);
+  SEXP dgeemm_wrapper (SEXP N, SEXP X, SEXP Y, SEXP Z, SEXP X_isBM, SEXP Y_isBM);
   //SEXP dadd(SEXP N, SEXP ALPHA, SEXP Y, SEXP Y_isBM, SEXP SIGN, SEXP ALPHA_LHS);
   
-  // Define trignometric functions
+  // Generic Math functions
+  SEXP dgepow(SEXP N, SEXP EXP, SEXP Y, SEXP Y_isBM);
+  
+  // Logarithm functions
   SEXP dgeclog(SEXP N, SEXP Y, SEXP Y_isBM);
+  SEXP dgelog(SEXP N, SEXP BASE, SEXP Y, SEXP Y_isBM);
+  SEXP dgeexp(SEXP N, SEXP Y, SEXP Y_isBM);
+  
+  // Define trignometric functions
   SEXP dgecosh(SEXP N, SEXP Y, SEXP Y_isBM);
   SEXP dgetanh(SEXP N, SEXP Y, SEXP Y_isBM);
   SEXP dgesinh(SEXP N, SEXP Y, SEXP Y_isBM);
@@ -261,7 +271,90 @@ dgeqrf_wrapper (SEXP M, SEXP N, SEXP Y, SEXP LDA, SEXP TAU, SEXP WORK,
 }
 
 
-// Unsure if there is a 'proper' BLAS function for log and trig functions
+// Unsure if there is a 'proper' BLAS function for the following functions
+
+// element-wise matrix multiplcation
+SEXP
+dgeemm_wrapper (SEXP N, SEXP X, SEXP Y, SEXP Z, SEXP X_isBM, SEXP Y_isBM){
+  SEXP ans, Tr;
+  double *pZ;
+  double *pY = make_double_ptr (Y, Y_isBM);
+  double *pX = make_double_ptr (X, X_isBM);
+  unsigned int NN = (unsigned int) * (DOUBLE_DATA(N));
+//  pY = make_double_ptr(Y, Y_isBM);
+  
+  PROTECT(ans = Z);
+  PROTECT(Tr = allocVector(LGLSXP, 1));
+  LOGICAL(Tr)[0] = 1;
+  pZ = make_double_ptr (Z, Tr);
+  
+  unsigned int i = 0;
+  //unsigned int limit = 33;
+  unsigned int blocklimit;
+  
+  /* The limit may not be divisible by BLOCKSIZE, 
+   * go as near as we can first, then tidy up.
+   */ 
+  blocklimit = ( NN / BLOCKSIZE ) * BLOCKSIZE;
+  
+  while( i < blocklimit )
+  {
+    pZ[i] = pX[i]*pY[i];
+    pZ[i+1] = pX[i+1]*pY[i+1];
+    pZ[i+2] = pX[i+2]*pY[i+2];
+    pZ[i+3] = pX[i+3]*pY[i+3];
+    pZ[i+4] = pX[i+4]*pY[i+4];
+    pZ[i+5] = pX[i+5]*pY[i+5];
+    pZ[i+6] = pX[i+6]*pY[i+6];
+    pZ[i+7] = pX[i+7]*pY[i+7];
+    
+    // update counter
+    i+=8;
+  }
+  
+  // finish remaining elements
+  if( i < NN ) 
+    { 
+        /* Jump into the case at the place that will allow
+         * us to finish off the appropriate number of items. 
+         */ 
+
+        switch( NN - i ) 
+        { 
+            case 7 : pZ[i] = pX[i]*pY[i]; i++; 
+            case 6 : pZ[i] = pX[i]*pY[i]; i++; 
+            case 5 : pZ[i] = pX[i]*pY[i]; i++; 
+            case 4 : pZ[i] = pX[i]*pY[i]; i++; 
+            case 3 : pZ[i] = pX[i]*pY[i]; i++; 
+            case 2 : pZ[i] = pX[i]*pY[i]; i++; 
+            case 1 : pZ[i] = pX[i]*pY[i]; 
+        }
+    } 
+    unprotect(2);
+    return ans;
+}
+
+
+// Power
+SEXP
+dgepow(SEXP N, SEXP EXP, SEXP Y, SEXP Y_isBM) {
+  SEXP ans;
+  double *pY;
+  INT NN = (INT) * (DOUBLE_DATA(N));
+  double PP = (double) * (DOUBLE_DATA (EXP));
+  pY = make_double_ptr(Y, Y_isBM);
+  PROTECT(ans = Y);
+ 
+  for (INT i=0; i < NN; ++i)
+  {
+    pY[i] = pow(pY[i], PP);
+  }
+  
+  unprotect(1);
+  return ans;
+}
+
+
 // common logarithm
 SEXP
 dgeclog(SEXP N, SEXP Y, SEXP Y_isBM) {
@@ -280,7 +373,44 @@ dgeclog(SEXP N, SEXP Y, SEXP Y_isBM) {
   return ans;
 }
 
+// base logarithm
+SEXP
+dgelog(SEXP N, SEXP BASE, SEXP Y, SEXP Y_isBM) {
+  SEXP ans;
+  double *pY;
+  INT NN = (INT) * (DOUBLE_DATA(N));
+  double BB = (double) * (DOUBLE_DATA (BASE));
+  pY = make_double_ptr(Y, Y_isBM);
+  PROTECT(ans = Y);
+ 
+  for (INT i=0; i < NN; ++i)
+  {
+    pY[i] = log10(pY[i])/log10(BB);
+  }
+  
+  unprotect(1);
+  return ans;
+}
 
+// Exponential function
+SEXP
+dgeexp(SEXP N, SEXP Y, SEXP Y_isBM) {
+  SEXP ans;
+  double *pY;
+  INT NN = (INT) * (DOUBLE_DATA(N));
+  pY = make_double_ptr(Y, Y_isBM);
+  PROTECT(ans = Y);
+ 
+  for (INT i=0; i < NN; ++i)
+  {
+    pY[i] = exp(pY[i]);
+  }
+  
+  unprotect(1);
+  return ans;
+}
+
+// hyperbolic tangent
 SEXP
 dgetanh(SEXP N, SEXP Y, SEXP Y_isBM) {
   SEXP ans;
@@ -298,7 +428,7 @@ dgetanh(SEXP N, SEXP Y, SEXP Y_isBM) {
   return ans;
 }
 
-
+// hyperbolic cosine
 SEXP
 dgecosh(SEXP N, SEXP Y, SEXP Y_isBM) {
   SEXP ans;
@@ -316,6 +446,7 @@ dgecosh(SEXP N, SEXP Y, SEXP Y_isBM) {
   return ans;
 }
 
+// hyperbolic sine
 SEXP
 dgesinh(SEXP N, SEXP Y, SEXP Y_isBM) {
   SEXP ans;

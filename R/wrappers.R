@@ -111,6 +111,36 @@ daxpy = function(A=1, X, Y, LHS=1)
 }
 
 
+dgeemm = function(X, Y)
+{
+  if(class(X) != class(Y)){
+    mixed = TRUE
+  }else{
+    mixed=FALSE
+  }
+  
+  X.is.bm = check_matrix(X,classes=c('big.matrix','matrix','vector','numeric'))
+  Y.is.bm = check_matrix(Y, classes=c('big.matrix', 'matrix', 'vector', 'numeric'))
+  
+  # size of matrix
+  L = length(X)
+  
+  # Dimensions
+  D = dim(X)
+  M = D[1]
+  N = D[2]
+  
+  # create matrix for new values
+  Z = anon_matrix(M,N,val=0.0)
+
+  ans = .Call("dgeemm_wrapper", as.double(L), X, Y, Z, X.is.bm, Y.is.bm,
+              PACKAGE="bigalgebra")
+  
+  if(mixed) return(ans[])
+  return(ans)
+}
+
+
 dgeqrf = function(A)
 {
   A.is.bm = check_matrix(A,classes=c('big.matrix','matrix','vector','numeric'))

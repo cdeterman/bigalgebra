@@ -4,6 +4,7 @@ importFrom("bigmemory", "typeof")
 exportMethods("%*%")
 exportMethods("Arith")
 exportMethods("Math")
+exportMethods("log")
 exportMethods("qr")
 #Functions
 export("daxpy")

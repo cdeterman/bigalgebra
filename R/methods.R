@@ -35,6 +35,7 @@ setMethod("Arith",c(e1="big.matrix", e2="big.matrix"),
     switch(op,
       `+` = daxpy(1.0,e1,e2),
       `-` = daxpy(-1.0,e2,e1),
+      `*` = dgeemm(e1, e2),
       stop("Undefined operation")
     )
   }
@@ -46,6 +47,7 @@ setMethod("Arith",c(e1="big.matrix", e2="matrix"),
     switch(op,
       `+` = daxpy(1.0,e1,e2),
       `-` = daxpy(-1.0,e2,e1),
+      `*` = dgeemm(e1, e2),
       stop("Undefined operation")
     )
   }
@@ -57,6 +59,7 @@ setMethod("Arith",c(e1="matrix", e2="big.matrix"),
     switch(op,
       `+` = daxpy(1.0,e1,e2),
       `-` = daxpy(-1.0,e2,e1),
+      `*` = dgeemm(e2, e1),
       stop("Undefined operation")
     )
   }
@@ -87,6 +90,7 @@ setMethod("Arith",c(e1="big.matrix", e2="numeric"),
       return(switch(op,
         `+` = daxpy(1.0,e1,e2),
         `-` = daxpy(-1.0,e1,e2, 0),
+        `^` = dgepow(e1, e2),
         stop("Undefined operation")
       ))
     }
@@ -99,12 +103,21 @@ setMethod("Math", c(x="big.matrix"),
           {
             op = .Generic[[1]]
             switch(op,
+                   `sqrt` = dgepow(x, 0.5),
+                   `exp` = dgeexp(x),
                    `log10` = dgeclog(x),
                    `sinh` = dgesinh(x),
                    `cosh` = dgecosh(x),
                    `tanh` = dgetanh(x),
                    stop("Undefined operation")
             )
+          }
+)
+
+setMethod("log", signature(x="big.matrix"),
+          function(x, base=exp(1))
+          {
+            dgelog(x, base)
           }
 )
 

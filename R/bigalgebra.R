@@ -66,9 +66,34 @@ daxpy = function(N=NULL, ALPHA=1, X, INCX=1, Y, INCY=1)
   {
     N = as.double(nrow(X))*as.double(ncol(X))
   }
+  
   .Call('daxpy_wrapper', as.double(N), as.double(ALPHA), X, as.double(INCX),
     Y, as.double(INCY), X.is.bm, Y.is.bm)
   return(0)
+}
+
+# Element-wise Matrix Multiplication
+# C := A * B
+dgeemm = function(A, B) 
+{
+  A.is.bm = check_matrix(A)
+  B.is.bm = check_matrix(B)
+  
+  if(!all(dim(A) == dim(B))){
+    stop("Error: Matrix dimensions must be equal")
+  }
+  
+  N = as.double(nrow(B)) * as.double(ncol(A)) 
+  
+  if(B.is.bm) {
+    C = deepcopy(B, backingfile="")
+  } else {
+    C = B
+  }
+    
+  .Call('dgeemm_wrapper', as.double(N), A, C,
+        A.is.bm, B.is.bm)
+  return(C)
 }
 
 
@@ -301,6 +326,23 @@ dgesdd = function( JOBZ='A', M=NULL, N=NULL, A, LDA=NULL, S, U, LDU=NULL,
 
 
 
+
+# Power of matrix elements
+# Y := POW(Y, B)
+dgepow = function(Y, EXP)
+{
+  Y.is.bm = check_matrix(Y)
+  if(Y.is.bm) {
+    ret = deepcopy(Y, backingfile="")
+  } else {
+    ret = Y
+  }
+  N = as.double(nrow(Y)) * as.double(ncol(Y)) 
+  .Call('dgepow', N, EXP, ret, Y.is.bm)
+  return(ret)
+}
+
+
 # Common log of matrix elements
 # Y := LOG10(Y)
 dgeclog = function(Y)
@@ -313,6 +355,38 @@ dgeclog = function(Y)
   }
   N = as.double(nrow(Y)) * as.double(ncol(Y)) 
   .Call('dgeclog', N, ret, Y.is.bm)
+  return(ret)
+}
+
+
+# Base log of matrix elements
+# Y := LOG(Y, B)
+dgelog = function(Y, BASE)
+{
+  Y.is.bm = check_matrix(Y)
+  if(Y.is.bm) {
+    ret = deepcopy(Y, backingfile="")
+  } else {
+    ret = Y
+  }
+  N = as.double(nrow(Y)) * as.double(ncol(Y)) 
+  .Call('dgelog', N, BASE, ret, Y.is.bm)
+  return(ret)
+}
+
+
+# Exponential function of matrix elements
+# Y := EXP(Y)
+dgeexp = function(Y)
+{
+  Y.is.bm = check_matrix(Y)
+  if(Y.is.bm) {
+    ret = deepcopy(Y, backingfile="")
+  } else {
+    ret = Y
+  }
+  N = as.double(nrow(Y)) * as.double(ncol(Y)) 
+  .Call('dgeexp', N, ret, Y.is.bm)
   return(ret)
 }
 
