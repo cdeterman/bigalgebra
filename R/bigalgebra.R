@@ -55,6 +55,22 @@ dadd = function(Y, ALPHA, SIGN=1, ALPHA_LHS=1)
   return(ret)
 }
 
+dgesmd = function(Y, ALPHA, ALPHA_LHS=0)
+{
+  if (!is.numeric(ALPHA) || length(ALPHA) != 1)
+    stop("ALPHA is not a scalar numeric value")
+  Y.is.bm = check_matrix(Y)
+  if (Y.is.bm) {
+    ret = deepcopy(Y, backingfile="")
+  } else {
+    ret = Y
+  }
+  N = as.double(nrow(Y)) * as.double(ncol(Y))
+  .Call('dgesmd_wrapper', N, as.double(ALPHA), ret, Y.is.bm, 
+        as.integer(ALPHA_LHS))
+  return(ret)
+}
+
 # Add two matrices.
 # Y := ALPHA * X + Y
 daxpy = function(N=NULL, ALPHA=1, X, INCX=1, Y, INCY=1)

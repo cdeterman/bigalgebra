@@ -42,6 +42,7 @@ extern "C"
   SEXP dgeemm_wrapper (SEXP N, SEXP X, SEXP Y, SEXP Z, SEXP X_isBM, SEXP Y_isBM);
   SEXP dgeemd_wrapper (SEXP N, SEXP X, SEXP Y, SEXP Z, SEXP X_isBM, SEXP Y_isBM);
   SEXP dadd(SEXP N, SEXP ALPHA, SEXP Y, SEXP Y_isBM, SEXP SIGN, SEXP ALPHA_LHS);
+  SEXP dgesmd_wrapper (SEXP N, SEXP A, SEXP Y, SEXP Y_isBM, SEXP ALPHA_LHS);
   
   // Generic Math functions
   SEXP dgepow(SEXP N, SEXP EXP, SEXP Y, SEXP Y_isBM);
@@ -290,7 +291,6 @@ dgeemm_wrapper (SEXP N, SEXP X, SEXP Y, SEXP Z, SEXP X_isBM, SEXP Y_isBM){
   pZ = make_double_ptr (Z, Tr);
   
   unsigned int i = 0;
-  //unsigned int limit = 33;
   unsigned int blocklimit;
   
   /* The limit may not be divisible by BLOCKSIZE, 
@@ -397,6 +397,89 @@ dgeemd_wrapper (SEXP N, SEXP X, SEXP Y, SEXP Z, SEXP X_isBM, SEXP Y_isBM){
     return ans;
 }
 
+
+// common logarithm
+SEXP
+dgesmd_wrapper (SEXP N, SEXP A, SEXP Y, SEXP Y_isBM, SEXP ALPHA_LHS) {
+  SEXP ans;
+  double *pY;
+  INT NN = (INT) * (DOUBLE_DATA(N));
+  INT ALPHA = (INT) * (DOUBLE_DATA(A));
+  int alpha_lhs = *(INTEGER_DATA(ALPHA_LHS));
+  pY = make_double_ptr(Y, Y_isBM);
+  PROTECT(ans = Y);
+ 
+  unsigned int i = 0;
+  unsigned int blocklimit;
+  blocklimit = ( NN / BLOCKSIZE ) * BLOCKSIZE;
+  
+  if(alpha_lhs == 0){
+    while( i < blocklimit )
+    {
+      pY[i] = pY[i]/ALPHA;
+      pY[i+1] = pY[i+1]/ALPHA;
+      pY[i+2] = pY[i+2]/ALPHA;
+      pY[i+3] = pY[i+3]/ALPHA;
+      pY[i+4] = pY[i+4]/ALPHA;
+      pY[i+5] = pY[i+5]/ALPHA;
+      pY[i+6] = pY[i+6]/ALPHA;
+      pY[i+7] = pY[i+7]/ALPHA;
+      
+      // update counter
+      i+=8;
+    }
+    
+    // finish remaining elements
+    if( i < NN ) 
+      { 
+          switch( NN - i ) 
+          { 
+              case 7 : pY[i] = pY[i] / ALPHA; i++; 
+              case 6 : pY[i] = pY[i] / ALPHA; i++; 
+              case 5 : pY[i] = pY[i] / ALPHA; i++; 
+              case 4 : pY[i] = pY[i] / ALPHA; i++; 
+              case 3 : pY[i] = pY[i] / ALPHA; i++; 
+              case 2 : pY[i] = pY[i] / ALPHA; i++; 
+              case 1 : pY[i] = pY[i] / ALPHA; 
+          }
+      } 
+  }
+  else
+  {
+    while( i < blocklimit )
+    {
+      pY[i] = ALPHA / pY[i];
+      pY[i+1] = ALPHA / pY[i+1];
+      pY[i+2] = ALPHA / pY[i+2];
+      pY[i+3] = ALPHA / pY[i+3];
+      pY[i+4] = ALPHA / pY[i+4];
+      pY[i+5] = ALPHA / pY[i+5];
+      pY[i+6] = ALPHA / pY[i+6];
+      pY[i+7] = ALPHA / pY[i+7];
+      
+      // update counter
+      i+=8;
+    }
+    
+    // finish remaining elements
+    if( i < NN ) 
+      { 
+          switch( NN - i ) 
+          { 
+              case 7 : pY[i] = ALPHA / pY[i]; i++; 
+              case 6 : pY[i] = ALPHA / pY[i]; i++; 
+              case 5 : pY[i] = ALPHA / pY[i]; i++; 
+              case 4 : pY[i] = ALPHA / pY[i]; i++; 
+              case 3 : pY[i] = ALPHA / pY[i]; i++; 
+              case 2 : pY[i] = ALPHA / pY[i]; i++; 
+              case 1 : pY[i] = ALPHA / pY[i]; 
+          }
+      }
+  }
+  
+  unprotect(1);
+  return ans;
+}
 
 
 // Power

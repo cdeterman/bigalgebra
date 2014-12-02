@@ -77,6 +77,7 @@ setMethod("Arith",c(e1="numeric", e2="big.matrix"),
       return(switch(op,
         `+` = dadd(e2,e1, 1.0,1),
         `-` = dadd(e2,e1,-1.0,1),
+        `/` = dgesmd(e2, e1, 1),
         stop("Undefined operation")
       ))
     }
@@ -94,6 +95,7 @@ setMethod("Arith",c(e1="big.matrix", e2="numeric"),
         `+` = dadd(e1,e2, 1.0,0),
         `-` = dadd(e1,e2,-1.0,0),
         `^` = dgepow(e1, e2),
+        `/` = dgesmd(e1, e2, 0),
         stop("Undefined operation")
       ))
     }
