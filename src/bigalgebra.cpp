@@ -40,7 +40,8 @@ extern "C"
                         SEXP LWORK, SEXP INFO, SEXP A_isBM, SEXP TAU_isBM, 
                         SEXP WORK_isBM);
   SEXP dgeemm_wrapper (SEXP N, SEXP X, SEXP Y, SEXP Z, SEXP X_isBM, SEXP Y_isBM);
-  //SEXP dadd(SEXP N, SEXP ALPHA, SEXP Y, SEXP Y_isBM, SEXP SIGN, SEXP ALPHA_LHS);
+  SEXP dgeemd_wrapper (SEXP N, SEXP X, SEXP Y, SEXP Z, SEXP X_isBM, SEXP Y_isBM);
+  SEXP dadd(SEXP N, SEXP ALPHA, SEXP Y, SEXP Y_isBM, SEXP SIGN, SEXP ALPHA_LHS);
   
   // Generic Math functions
   SEXP dgepow(SEXP N, SEXP EXP, SEXP Y, SEXP Y_isBM);
@@ -195,7 +196,7 @@ daxpy_wrapper (SEXP N, SEXP A, SEXP X, SEXP Y, SEXP X_isBM)
  * in order to use daxpy
  */
 
-/*
+
 SEXP
 dadd(SEXP N, SEXP ALPHA, SEXP Y, SEXP Y_isBM, SEXP SIGN, SEXP ALPHA_LHS) {
   SEXP ans;
@@ -223,7 +224,7 @@ dadd(SEXP N, SEXP ALPHA, SEXP Y, SEXP Y_isBM, SEXP SIGN, SEXP ALPHA_LHS) {
   unprotect(1);
   return ans;
 }
-*/
+
 
 
 
@@ -333,6 +334,69 @@ dgeemm_wrapper (SEXP N, SEXP X, SEXP Y, SEXP Z, SEXP X_isBM, SEXP Y_isBM){
     unprotect(2);
     return ans;
 }
+
+
+// element-wise matrix division
+SEXP
+dgeemd_wrapper (SEXP N, SEXP X, SEXP Y, SEXP Z, SEXP X_isBM, SEXP Y_isBM){
+  SEXP ans, Tr;
+  double *pZ;
+  double *pY = make_double_ptr (Y, Y_isBM);
+  double *pX = make_double_ptr (X, X_isBM);
+  unsigned int NN = (unsigned int) * (DOUBLE_DATA(N));
+//  pY = make_double_ptr(Y, Y_isBM);
+  
+  PROTECT(ans = Z);
+  PROTECT(Tr = allocVector(LGLSXP, 1));
+  LOGICAL(Tr)[0] = 1;
+  pZ = make_double_ptr (Z, Tr);
+  
+  unsigned int i = 0;
+  //unsigned int limit = 33;
+  unsigned int blocklimit;
+  
+  /* The limit may not be divisible by BLOCKSIZE, 
+   * go as near as we can first, then tidy up.
+   */ 
+  blocklimit = ( NN / BLOCKSIZE ) * BLOCKSIZE;
+  
+  while( i < blocklimit )
+  {
+    pZ[i] = pX[i] / pY[i];
+    pZ[i+1] = pX[i+1] / pY[i+1];
+    pZ[i+2] = pX[i+2] / pY[i+2];
+    pZ[i+3] = pX[i+3] / pY[i+3];
+    pZ[i+4] = pX[i+4] / pY[i+4];
+    pZ[i+5] = pX[i+5] / pY[i+5];
+    pZ[i+6] = pX[i+6] / pY[i+6];
+    pZ[i+7] = pX[i+7] / pY[i+7];
+    
+    // update counter
+    i+=8;
+  }
+  
+  // finish remaining elements
+  if( i < NN ) 
+    { 
+        /* Jump into the case at the place that will allow
+         * us to finish off the appropriate number of items. 
+         */ 
+
+        switch( NN - i ) 
+        { 
+            case 7 : pZ[i] = pX[i] / pY[i]; i++; 
+            case 6 : pZ[i] = pX[i] / pY[i]; i++; 
+            case 5 : pZ[i] = pX[i] / pY[i]; i++; 
+            case 4 : pZ[i] = pX[i] / pY[i]; i++; 
+            case 3 : pZ[i] = pX[i] / pY[i]; i++; 
+            case 2 : pZ[i] = pX[i] / pY[i]; i++; 
+            case 1 : pZ[i] = pX[i] / pY[i]; 
+        }
+    } 
+    unprotect(2);
+    return ans;
+}
+
 
 
 // Power

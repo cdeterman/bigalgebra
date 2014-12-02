@@ -36,6 +36,7 @@ setMethod("Arith",c(e1="big.matrix", e2="big.matrix"),
       `+` = daxpy(1.0,e1,e2),
       `-` = daxpy(-1.0,e2,e1),
       `*` = dgeemm(e1, e2),
+      `/` = dgeemd(e1, e2),
       stop("Undefined operation")
     )
   }
@@ -48,6 +49,7 @@ setMethod("Arith",c(e1="big.matrix", e2="matrix"),
       `+` = daxpy(1.0,e1,e2),
       `-` = daxpy(-1.0,e2,e1),
       `*` = dgeemm(e1, e2),
+      `/` = dgeemd(e1, e2),
       stop("Undefined operation")
     )
   }
@@ -60,6 +62,7 @@ setMethod("Arith",c(e1="matrix", e2="big.matrix"),
       `+` = daxpy(1.0,e1,e2),
       `-` = daxpy(-1.0,e2,e1),
       `*` = dgeemm(e2, e1),
+      `/` = dgeemd(e1, e2),
       stop("Undefined operation")
     )
   }
@@ -72,8 +75,8 @@ setMethod("Arith",c(e1="numeric", e2="big.matrix"),
       if (op=="*") 
         return(daxpy(e1,e2))
       return(switch(op,
-        `+` = daxpy(1.0,e2,e1),
-        `-` = daxpy(-1.0,e2,e1),
+        `+` = dadd(e2,e1, 1.0,1),
+        `-` = dadd(e2,e1,-1.0,1),
         stop("Undefined operation")
       ))
     }
@@ -88,8 +91,8 @@ setMethod("Arith",c(e1="big.matrix", e2="numeric"),
       if( op=="*") 
         return(daxpy(e2,e1))
       return(switch(op,
-        `+` = daxpy(1.0,e1,e2),
-        `-` = daxpy(-1.0,e1,e2, 0),
+        `+` = dadd(e1,e2, 1.0,0),
+        `-` = dadd(e1,e2,-1.0,0),
         `^` = dgepow(e1, e2),
         stop("Undefined operation")
       ))

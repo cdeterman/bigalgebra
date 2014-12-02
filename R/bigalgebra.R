@@ -39,21 +39,21 @@ dcopy = function(N=NULL, X, INCX=1, Y, INCY=1)
 
 # Add a scalar to each element of a matrix
 # Y := Y+SIGN*ALPHA 
-# dadd = function(Y, ALPHA, SIGN=1, ALPHA_LHS=1)
-# {
-#   if (!is.numeric(ALPHA) || length(ALPHA) != 1)
-#     stop("ALPHA is not a scalar numeric value")
-#   Y.is.bm = check_matrix(Y)
-#   if (Y.is.bm) {
-#     ret = deepcopy(Y, backingfile="")
-#   } else {
-#     ret = Y
-#   }
-#   N = as.double(nrow(Y)) * as.double(ncol(Y))
-#   .Call('dadd', N, as.double(ALPHA), ret, Y.is.bm, as.double(SIGN), 
-#         as.integer(ALPHA_LHS))
-#   return(ret)
-# }
+dadd = function(Y, ALPHA, SIGN=1, ALPHA_LHS=1)
+{
+  if (!is.numeric(ALPHA) || length(ALPHA) != 1)
+    stop("ALPHA is not a scalar numeric value")
+  Y.is.bm = check_matrix(Y)
+  if (Y.is.bm) {
+    ret = deepcopy(Y, backingfile="")
+  } else {
+    ret = Y
+  }
+  N = as.double(nrow(Y)) * as.double(ncol(Y))
+  .Call('dadd', N, as.double(ALPHA), ret, Y.is.bm, as.double(SIGN), 
+        as.integer(ALPHA_LHS))
+  return(ret)
+}
 
 # Add two matrices.
 # Y := ALPHA * X + Y
@@ -92,6 +92,30 @@ dgeemm = function(A, B)
   }
     
   .Call('dgeemm_wrapper', as.double(N), A, C,
+        A.is.bm, B.is.bm)
+  return(C)
+}
+
+# Element-wise Matrix Multiplication
+# C := A * B
+dgeemd = function(A, B) 
+{
+  A.is.bm = check_matrix(A)
+  B.is.bm = check_matrix(B)
+  
+  if(!all(dim(A) == dim(B))){
+    stop("Error: Matrix dimensions must be equal")
+  }
+  
+  N = as.double(nrow(B)) * as.double(ncol(A)) 
+  
+  if(B.is.bm) {
+    C = deepcopy(B, backingfile="")
+  } else {
+    C = B
+  }
+  
+  .Call('dgeemd_wrapper', as.double(N), A, C,
         A.is.bm, B.is.bm)
   return(C)
 }

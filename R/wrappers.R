@@ -62,55 +62,33 @@ daxpy = function(A=1, X, Y, LHS=1)
 {
   mixed = FALSE
   X.is.bm = check_matrix(X,classes=c('big.matrix','matrix','vector','numeric'))
-  
-  if(!class(X) %in% c('big.matrix', 'matrix', 'vector')){
-    X.bm <- big.matrix(nrow(Y), ncol(Y), type="double", init=X)
-  }else{
-    X.bm <- X
-  }
-  
-  if(!class(Y) %in% c('big.matrix', 'matrix', 'vector')){
-    Y.bm <- big.matrix(nrow(X), ncol(X), type="double", init=Y)
-  }else{
-    Y.bm <- Y
-  }
-  
-# default to a column big matrix output
-  M = length(X.bm)
+  # default to a column big matrix output
+  M = length(X)
   L = M
   N = 1L
-  D = dim(X.bm)
+  D = dim(X)
   if(!is.null(D) && length(D)==2)
   {
     M = D[1]
     N = D[2]
   }
   Z = anon_matrix(M,N,val=0.0)
-
-  if(!missing(Y.bm))
+  if(!missing(Y))
   {
     # Check conformity of Y and duplicate
-    if(length(Y.bm)!=length(X.bm)) stop("Lengths of X and Y must match")
-    mixed = (X.is.bm != check_matrix(Y.bm,classes=c('big.matrix','matrix','vector','numeric')))
-    Z[] = Y.bm[]
+    if(length(Y)!=length(X)) stop("Lengths of X and Y must match")
+    mixed = (X.is.bm != check_matrix(Y,classes=c('big.matrix','matrix','vector','numeric')))
+    Z[] = Y[]
   }
-
-  # current workaround with subtracting scalar from big.matrix
-  if(LHS == 0){
-    W <- anon_matrix(M, N, val=0.0)
-    W[] <- X.bm[]
-    ans = .Call("daxpy_wrapper", as.double(L), as.double(A), Z, W, X.is.bm,
-                PACKAGE="bigalgebra")
-  }else{
-    ans = .Call("daxpy_wrapper", as.double(L), as.double(A), X.bm, Z, X.is.bm,
-                PACKAGE="bigalgebra")
-  }
-  
+  ans = .Call("daxpy_wrapper", as.double(L), as.double(A), X, Z, X.is.bm,
+              PACKAGE="bigalgebra")
   if(mixed) return(ans[])
   ans
 }
 
 
+# Element-wise Matrix Multiplication
+# C:= A * B
 dgeemm = function(X, Y)
 {
   if(class(X) != class(Y)){
@@ -141,6 +119,38 @@ dgeemm = function(X, Y)
 }
 
 
+# Element-wise Matrix Division
+# C:= A / B
+dgeemd = function(X, Y)
+{
+  if(class(X) != class(Y)){
+    mixed = TRUE
+  }else{
+    mixed=FALSE
+  }
+  
+  X.is.bm = check_matrix(X,classes=c('big.matrix','matrix','vector','numeric'))
+  Y.is.bm = check_matrix(Y, classes=c('big.matrix', 'matrix', 'vector', 'numeric'))
+  
+  # size of matrix
+  L = length(X)
+  
+  # Dimensions
+  D = dim(X)
+  M = D[1]
+  N = D[2]
+  
+  # create matrix for new values
+  Z = anon_matrix(M,N,val=0.0)
+  
+  ans = .Call("dgeemd_wrapper", as.double(L), X, Y, Z, X.is.bm, Y.is.bm,
+              PACKAGE="bigalgebra")
+  
+  if(mixed) return(ans[])
+  return(ans)
+}
+
+# Matrix QR Decomposition
 dgeqrf = function(A)
 {
   A.is.bm = check_matrix(A,classes=c('big.matrix','matrix','vector','numeric'))
