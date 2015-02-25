@@ -50,8 +50,10 @@ dadd = function(Y, ALPHA, SIGN=1, ALPHA_LHS=1)
     ret = Y
   }
   N = as.double(nrow(Y)) * as.double(ncol(Y))
-  .Call('dadd', N, as.double(ALPHA), ret, Y.is.bm, as.double(SIGN), 
-        as.integer(ALPHA_LHS))
+#   .Call('dadd', N, as.double(ALPHA), ret, Y.is.bm, as.double(SIGN), 
+#         as.integer(ALPHA_LHS))
+  dadd_wrapper(N, as.double(ALPHA), ret, Y.is.bm, as.double(SIGN), 
+      as.integer(ALPHA_LHS))  
   return(ret)
 }
 
@@ -66,13 +68,15 @@ dgesmd = function(Y, ALPHA, ALPHA_LHS=0)
     ret = Y
   }
   N = as.double(nrow(Y)) * as.double(ncol(Y))
-  .Call('dgesmd_wrapper', N, as.double(ALPHA), ret, Y.is.bm, 
+  dgesmd_wrapper(N, as.double(ALPHA), ret, Y.is.bm, 
         as.integer(ALPHA_LHS))
   return(ret)
 }
 
 # Add two matrices.
 # Y := ALPHA * X + Y
+
+#' @export
 daxpy = function(N=NULL, ALPHA=1, X, INCX=1, Y, INCY=1)
 {  
   Y.is.bm = check_matrix(Y)
@@ -83,7 +87,7 @@ daxpy = function(N=NULL, ALPHA=1, X, INCX=1, Y, INCY=1)
     N = as.double(nrow(X))*as.double(ncol(X))
   }
   
-  .Call('daxpy_wrapper', as.double(N), as.double(ALPHA), X, as.double(INCX),
+  daxpy_wrapper(as.double(N), as.double(ALPHA), X, as.double(INCX),
     Y, as.double(INCY), X.is.bm, Y.is.bm)
   return(0)
 }
@@ -107,7 +111,7 @@ dgeemm = function(A, B)
     C = B
   }
     
-  .Call('dgeemm_wrapper', as.double(N), A, C,
+  dgeemm_wrapper(as.double(N), A, C,
         A.is.bm, B.is.bm)
   return(C)
 }
@@ -131,7 +135,7 @@ dgeemd = function(A, B)
     C = B
   }
   
-  .Call('dgeemd_wrapper', as.double(N), A, C,
+  dgeemd_wrapper(as.double(N), A, C,
         A.is.bm, B.is.bm)
   return(C)
 }
@@ -165,7 +169,7 @@ dgemm = function(TRANSA='n', TRANSB='n', M=NULL, N=NULL, K=NULL,
   if ( is.null(LDB) ) LDB = nrow (B)
   if ( is.null(LDC) ) LDC = nrow (C)
 
-  .Call('dgemm_wrapper', as.character(TRANSA), as.character(TRANSB),
+  dgemm_wrapper(as.character(TRANSA), as.character(TRANSB),
     as.double(M), as.double(N), as.double(K), as.double(ALPHA), A, 
     as.double(LDA), B, as.double(LDB),
     as.double(BETA), C, as.double(LDC), as.logical(A.is.bm), 
@@ -214,7 +218,7 @@ dgeqrf=function(M=NULL, N=NULL, A, LDA=NULL, TAU=NULL, WORK=NULL,
     ret = A
   }
   
-  .Call('dgeqrf_wrapper', as.double(M), as.double(N), ret, as.double(LDA), 
+  dgeqrf_wrapper(as.double(M), as.double(N), ret, as.double(LDA), 
     TAU, WORK, as.double(LWORK), as.double(INFO), A.is.bm, TAU.is.bm, 
     WORK.is.bm)
   return(ret)
@@ -235,7 +239,7 @@ dpotrf=function(UPLO='U', N=NULL, A, LDA=NULL)
   }
   A.is.bm = check_matrix(A)
   INFO = 0
-  .Call('dpotrf_wrapper', as.character(UPLO), as.double(N), A, as.double(LDA),
+  dpotrf_wrapper(as.character(UPLO), as.double(N), A, as.double(LDA),
     as.double(INFO), A.is.bm)
   return(INFO)
 }
@@ -289,9 +293,10 @@ dgeev=function(JOBVL='V', JOBVR='V', N=NULL, A, LDA=NULL, WR, WI, VL,
   VR.is.bm = check_matrix(VR)
   WORK.is.bm = check_matrix(WORK)
   INFO=0
-  .Call('dgeev_wrapper', as.character(JOBVL), as.character(JOBVR), as.double(N),    A, as.double(LDA), WR, WI, VL, as.double(LDVL), VR, as.double(LDVR),
-    WORK, as.double(LWORK), as.double(INFO), A.is.bm, WR.is.bm, WI.is.bm, 
-    VL.is.bm, VR.is.bm, WORK.is.bm)
+  dgeev_wrapper(as.character(JOBVL), as.character(JOBVR), as.double(N),    
+                A, as.double(LDA), WR, WI, VL, as.double(LDVL), VR, as.double(LDVR),
+                WORK, as.double(LWORK), as.double(INFO), A.is.bm, WR.is.bm, WI.is.bm, 
+                VL.is.bm, VR.is.bm, WORK.is.bm)
   return(INFO)
 }
 
@@ -357,7 +362,7 @@ dgesdd = function( JOBZ='A', M=NULL, N=NULL, A, LDA=NULL, S, U, LDU=NULL,
   }
   WORK.is.bm = check_matrix(WORK)
   INFO = 0
-  .Call('dgesdd_wrapper', as.character(JOBZ), as.double(M), as.double(N), A, 
+  dgesdd_wrapper(as.character(JOBZ), as.double(M), as.double(N), A, 
     as.double(LDA), S, U, as.double(LDU), VT, as.double(LDVT), WORK, 
     as.double(LWORK), as.double(INFO), A.is.bm, S.is.bm, U.is.bm, VT.is.bm, 
     WORK.is.bm)
@@ -378,9 +383,17 @@ dgepow = function(Y, EXP)
     ret = Y
   }
   N = as.double(nrow(Y)) * as.double(ncol(Y)) 
-  .Call('dgepow', N, EXP, ret, Y.is.bm)
+  dgepow_wrapper(N, EXP, ret, Y.is.bm)
   return(ret)
 }
+
+# dgepow2 = function(Y, EXP)
+# {
+#   #Y.is.bm = check_matrix(Y)
+#   #ret <- anon_matrix(nrow(Y), ncol(Y), type=typeof(Y))
+#   ans <- .Call('dgepow2', Y, EXP)
+#   return(ans)
+# }
 
 
 # Common log of matrix elements
@@ -394,7 +407,7 @@ dgeclog = function(Y)
     ret = Y
   }
   N = as.double(nrow(Y)) * as.double(ncol(Y)) 
-  .Call('dgeclog', N, ret, Y.is.bm)
+  dgeclog_wrapper(N, ret, Y.is.bm)
   return(ret)
 }
 
@@ -410,7 +423,7 @@ dgelog = function(Y, BASE)
     ret = Y
   }
   N = as.double(nrow(Y)) * as.double(ncol(Y)) 
-  .Call('dgelog', N, BASE, ret, Y.is.bm)
+  dgelog_wrapper(N, BASE, ret, Y.is.bm)
   return(ret)
 }
 
@@ -426,7 +439,7 @@ dgeexp = function(Y)
     ret = Y
   }
   N = as.double(nrow(Y)) * as.double(ncol(Y)) 
-  .Call('dgeexp', N, ret, Y.is.bm)
+  dgeexp_wrapper(N, ret, Y.is.bm)
   return(ret)
 }
 
@@ -442,7 +455,7 @@ dgesinh = function(Y)
     ret = Y
   }
   N = as.double(nrow(Y)) * as.double(ncol(Y)) 
-  .Call('dgesinh', N, ret, Y.is.bm)
+  dgesinh_wrapper(N, ret, Y.is.bm)
   return(ret)
 }
 
@@ -458,7 +471,7 @@ dgecosh = function(Y)
     ret = Y
   }
   N = as.double(nrow(Y)) * as.double(ncol(Y)) 
-  .Call('dgecosh', N, ret, Y.is.bm)
+  dgecosh_wrapper(N, ret, Y.is.bm)
   return(ret)
 }
 
@@ -474,6 +487,6 @@ dgetanh = function(Y)
     ret = Y
   }
   N = as.double(nrow(Y)) * as.double(ncol(Y)) 
-  .Call('dgetanh', N, ret, Y.is.bm)
+  dgetanh_wrapper(N, ret, Y.is.bm)
   return(ret)
 }

@@ -1,12 +1,10 @@
-#include <string>
-#include <iostream>
-#include <cmath>
+// prevent R include files from defining length
+#define R_NO_REMAP
+
+// add BigMatrix 
 #include "bigmemory/BigMatrix.h"
 
-#include <R.h>
-#include <Rinternals.h>
-#include <Rdefines.h>
-
+// condition for 64-bit reference BLAS
 #ifdef REFBLAS
 #include "refblas64longlong.h"
 #define INT long long
@@ -16,13 +14,25 @@
 #define INT int
 #endif
 
+
+//#include <Rcpp.h>
+#include <RcppArmadillo.h>
+//// [[Rcpp::depends(RcppArmadillo, BH, bigmemory)]]
+
 #define BLOCKSIZE (8)
+
+using namespace Rcpp;
+
+// provide BigMatrix definitions
+//#include "bigmemory/BigMatrix.h"
+//#include "bigmemory/MatrixAccessor.hpp"
+
 
 // Declare LAPACK functions
 extern "C"
 {
-  void dgeqrf_ (int *M, int *N, double *Y, int *LDA, double *TAU,
-                    double *WORK, int *LWORK, int *INFO); 
+  //void dgeqrf_ (int *M, int *N, double *Y, int *LDA, double *TAU,
+  //                  double *WORK, int *LWORK, int *INFO); 
 }
 
 #ifdef __cplusplus
@@ -32,41 +42,58 @@ extern "C"
 
   double *make_double_ptr (SEXP matrix, SEXP isBigMatrix);
 
-  SEXP dgemm_wrapper (SEXP TRANSA, SEXP TRANSB, SEXP M, SEXP N, SEXP K,
-                      SEXP ALPHA, SEXP A, SEXP LDA, SEXP B, SEXP LDB,
-                      SEXP BETA, SEXP C, SEXP LDC, SEXP A_isBM, SEXP B_isBM,
-                      SEXP C_isBM, SEXP C_offset);
-  SEXP daxpy_wrapper (SEXP N, SEXP A, SEXP X, SEXP Y, SEXP X_isBM);
-<<<<<<< HEAD
-  SEXP dgeqrf_wrapper (SEXP M, SEXP N, SEXP Y, SEXP LDA, SEXP TAU, SEXP WORK,
-                        SEXP LWORK, SEXP INFO, SEXP A_isBM, SEXP TAU_isBM, 
-                        SEXP WORK_isBM);
-  SEXP dgeemm_wrapper (SEXP N, SEXP X, SEXP Y, SEXP Z, SEXP X_isBM, SEXP Y_isBM);
-  SEXP dgeemd_wrapper (SEXP N, SEXP X, SEXP Y, SEXP Z, SEXP X_isBM, SEXP Y_isBM);
-=======
-  SEXP dpotrf_wrapper(SEXP UPLO, SEXP N, SEXP A, SEXP LDA, SEXP INFO,
-                      SEXP A_isBM);
->>>>>>> upstream/master
-  SEXP dadd(SEXP N, SEXP ALPHA, SEXP Y, SEXP Y_isBM, SEXP SIGN, SEXP ALPHA_LHS);
-  SEXP dgesmd_wrapper (SEXP N, SEXP A, SEXP Y, SEXP Y_isBM, SEXP ALPHA_LHS);
-  
-  // Generic Math functions
-  SEXP dgepow(SEXP N, SEXP EXP, SEXP Y, SEXP Y_isBM);
-  
-  // Logarithm functions
-  SEXP dgeclog(SEXP N, SEXP Y, SEXP Y_isBM);
-  SEXP dgelog(SEXP N, SEXP BASE, SEXP Y, SEXP Y_isBM);
-  SEXP dgeexp(SEXP N, SEXP Y, SEXP Y_isBM);
-  
-  // Define trignometric functions
-  SEXP dgecosh(SEXP N, SEXP Y, SEXP Y_isBM);
-  SEXP dgetanh(SEXP N, SEXP Y, SEXP Y_isBM);
-  SEXP dgesinh(SEXP N, SEXP Y, SEXP Y_isBM);
+//  SEXP dgemm_wrapper (SEXP TRANSA, SEXP TRANSB, SEXP M, SEXP N, SEXP K,
+//                      SEXP ALPHA, SEXP A, SEXP LDA, SEXP B, SEXP LDB,
+//                      SEXP BETA, SEXP C, SEXP LDC, SEXP A_isBM, SEXP B_isBM,
+//                      SEXP C_isBM, SEXP C_offset);
+//  SEXP daxpy_wrapper (SEXP N, SEXP A, SEXP X, SEXP Y, SEXP X_isBM);
+//  SEXP dgeqrf_wrapper (SEXP M, SEXP N, SEXP Y, SEXP LDA, SEXP TAU, SEXP WORK,
+//                        SEXP LWORK, SEXP INFO, SEXP A_isBM, SEXP TAU_isBM, 
+//                        SEXP WORK_isBM);
+//  SEXP dgeemm_wrapper (SEXP N, SEXP X, SEXP Y, SEXP Z, SEXP X_isBM, SEXP Y_isBM);
+//  SEXP dgeemd_wrapper (SEXP N, SEXP X, SEXP Y, SEXP Z, SEXP X_isBM, SEXP Y_isBM);
+//  SEXP dpotrf_wrapper(SEXP UPLO, SEXP N, SEXP A, SEXP LDA, SEXP INFO,
+//                      SEXP A_isBM);
+//  SEXP dadd(SEXP N, SEXP ALPHA, SEXP Y, SEXP Y_isBM, SEXP SIGN, SEXP ALPHA_LHS);
+//  SEXP dgesmd_wrapper (SEXP N, SEXP A, SEXP Y, SEXP Y_isBM, SEXP ALPHA_LHS);
+//  
+//  // Generic Math functions
+//  SEXP dgepow(SEXP N, SEXP EXP, SEXP Y, SEXP Y_isBM);
+//  
+//  // Logarithm functions
+//  SEXP dgeclog(SEXP N, SEXP Y, SEXP Y_isBM);
+//  SEXP dgelog(SEXP N, SEXP BASE, SEXP Y, SEXP Y_isBM);
+//  SEXP dgeexp(SEXP N, SEXP Y, SEXP Y_isBM);
+//  
+//  // Define trignometric functions
+//  SEXP dgecosh(SEXP N, SEXP Y, SEXP Y_isBM);
+//  SEXP dgetanh(SEXP N, SEXP Y, SEXP Y_isBM);
+//  SEXP dgesinh(SEXP N, SEXP Y, SEXP Y_isBM);
 
 #ifdef __cplusplus
 }
 #endif
 
+//' @useDynLib bigalgebra
+//' @importFrom Rcpp evalCpp
+//' @export
+// [[Rcpp::export]]
+void hello(){
+  std::cout << "hello" << std::endl;
+}
+
+//// [[Rcpp::export]]
+//SEXP
+//returnBM(SEXP pBigMat) {
+//  
+//  Rcpp::XPtr<BigMatrix> xpMat(pBigMat);
+//  // convert to arma matrix - false reuses memory
+//  arma::mat BM_arma((double *)xpMat->matrix(), 
+//                            xpMat->nrow(), 
+//                            xpMat->ncol(), 
+//                            false);
+//}
+                  
 
 /* Pointer utility, returns a double pointer for either a BigMatrix or a
  * standard R matrix.
@@ -76,9 +103,9 @@ make_double_ptr (SEXP matrix, SEXP isBigMatrix)
 {
   double *matrix_ptr;
 
-  if (LOGICAL_VALUE (isBigMatrix) == (Rboolean) TRUE)   // Big Matrix
+  if (Rf_asLogical (isBigMatrix) == (Rboolean) TRUE)   // Big Matrix
     {
-      SEXP address = GET_SLOT (matrix, install ("address"));
+      SEXP address = R_do_slot (matrix, Rf_install ("address"));
       BigMatrix *pbm =
         reinterpret_cast < BigMatrix * >(R_ExternalPtrAddr (address));
       if (!pbm)
@@ -104,10 +131,11 @@ make_double_ptr (SEXP matrix, SEXP isBigMatrix)
     }
 
   return (matrix_ptr);
-};
+}
 
 
 /* Wrappers for miscellaneous BLAS and LAPACK routines. */
+// [[Rcpp::export]]
 SEXP
 dgemm_wrapper (SEXP TRANSA, SEXP TRANSB, SEXP M, SEXP N, SEXP K,
                SEXP ALPHA, SEXP A, SEXP LDA, SEXP B, SEXP LDB, SEXP BETA,
@@ -125,7 +153,7 @@ dgemm_wrapper (SEXP TRANSA, SEXP TRANSB, SEXP M, SEXP N, SEXP K,
   INT LDAA = (INT) * (DOUBLE_DATA (LDA));
   INT LDBB = (INT) * (DOUBLE_DATA (LDB));
   INT LDCC = (INT) * (DOUBLE_DATA (LDC));
-  if(LOGICAL_VALUE(C_isBM) == (Rboolean) TRUE)
+  if(Rf_asLogical(C_isBM) == (Rboolean) TRUE)
   {
 /* Return results in a big matrix */
     pC = make_double_ptr (C, C_isBM) + j;
@@ -134,32 +162,59 @@ dgemm_wrapper (SEXP TRANSA, SEXP TRANSB, SEXP M, SEXP N, SEXP K,
 /* Allocate an output R matrix and return results there
    XXX Add check for size of MM and NN XXX 
  */
-    PROTECT(ans = allocMatrix(REALSXP, (int)MM, (int)NN));
+    PROTECT(ans = Rf_allocMatrix(REALSXP, (int)MM, (int)NN));
     pC = NUMERIC_DATA(ans);
   }
 /* An example of an alternate C-blas interface (e.g., ACML) */
 #ifdef CBLAS
-  dgemm (*((char *) CHARACTER_VALUE (TRANSA)),
-         *((char *) CHARACTER_VALUE (TRANSB)),
+  dgemm (*((char *) CHAR(Rf_asChar (TRANSA))),
+         *((char *) CHAR(Rf_asChar (TRANSB))),
          MM, NN, KK, *(NUMERIC_DATA (ALPHA)), pA, LDAA, pB,
          LDBB, *(NUMERIC_DATA (BETA)), pC, LDCC);
 #elif REFBLAS
 /* Standard Fortran interface without underscoring */
-  int8_dgemm ((char *) CHARACTER_VALUE (TRANSA),
-         (char *) CHARACTER_VALUE (TRANSB),
+  int8_dgemm ((char *) CHAR(Rf_asChar (TRANSA)),
+         (char *) CHAR(Rf_asChar (TRANSB)),
          &MM, &NN, &KK, NUMERIC_DATA (ALPHA), pA, &LDAA, pB,
          &LDBB, NUMERIC_DATA (BETA), pC, &LDCC);
 #else
 /* Standard Fortran interface from R's blas */
-  dgemm_ ((char *) CHARACTER_VALUE (TRANSA),
-         (char *) CHARACTER_VALUE (TRANSB),
+  dgemm_ ((char *) CHAR(Rf_asChar (TRANSA)),
+         (char *) CHAR(Rf_asChar (TRANSB)),
          &MM, &NN, &KK, NUMERIC_DATA (ALPHA), pA, &LDAA, pB,
          &LDBB, NUMERIC_DATA (BETA), pC, &LDCC);
 #endif
-  unprotect(1);
+  Rf_unprotect(1);
   return ans;
 }
 
+// [[Rcpp::export]]
+SEXP
+dgemm_wrapper2 (SEXP A, SEXP B, SEXP C, SEXP A_isBM, SEXP B_isBM, SEXP C_isBM)
+{
+  Rcpp::XPtr<BigMatrix> xpA(A);
+  Rcpp::XPtr<BigMatrix> xpB(B);
+  Rcpp::XPtr<BigMatrix> xpC(C);
+  SEXP ans;
+  
+  INT NN = xpC->nrow();
+  INT MM = xpC->ncol();
+  double *pC;
+
+  arma::mat Am( (double*) xpA->matrix(),
+                xpA->nrow(),
+                xpA->ncol(),
+                false);
+  
+  arma::mat Bm( (double*) xpB->matrix(),
+                xpB->nrow(),
+                xpB->ncol(),
+                false);
+
+  arma::mat Cm = Am * Bm;
+  memcpy(xpC->matrix(), &Cm, NN*MM*sizeof(double));
+  return xpC;
+}
 
 
 /* Compute A*X + Y for scalar a, vectors X and Y of length N.
@@ -167,6 +222,7 @@ dgemm_wrapper (SEXP TRANSA, SEXP TRANSB, SEXP M, SEXP N, SEXP K,
  * The contents of Y are *replaced* by this routine and a reference
  * to Y is returned.
  */
+ // [[Rcpp::export]]
 SEXP
 daxpy_wrapper (SEXP N, SEXP A, SEXP X, SEXP Y, SEXP X_isBM)
 {
@@ -178,7 +234,7 @@ daxpy_wrapper (SEXP N, SEXP A, SEXP X, SEXP Y, SEXP X_isBM)
   INT incy = 1;
   INT NN = (INT) * (DOUBLE_DATA (N));
   PROTECT(ans = Y);
-  PROTECT(Tr = allocVector(LGLSXP, 1));
+  PROTECT(Tr = Rf_allocVector(LGLSXP, 1));
   LOGICAL(Tr)[0] = 1;
   pY = make_double_ptr (Y, Tr);
 /* An example of an alternate C-blas interface (e.g., ACML) */
@@ -191,30 +247,31 @@ daxpy_wrapper (SEXP N, SEXP A, SEXP X, SEXP Y, SEXP X_isBM)
 /* Standard Fortran interface from R's blas */
   daxpy_ (&NN, pA, pX, &incx, pY, &incy);
 #endif
-  unprotect(2);
+  Rf_unprotect(2);
   return ans;
 }
   
+// [[Rcpp::export]]
 SEXP dpotrf_wrapper(SEXP UPLO, SEXP N, SEXP A, SEXP LDA, SEXP INFO, SEXP A_isBM)
 {
   SEXP ans;
-  const char *_UPLO = CHARACTER_VALUE(UPLO);
+  const char *_UPLO = CHAR(Rf_asChar(UPLO));
   INT _N = (INT)* (DOUBLE_DATA(N));
   double *_A = make_double_ptr(A, A_isBM);
   INT _LDA = (INT) *(DOUBLE_DATA(LDA));
   INT _INFO = (INT) *(DOUBLE_DATA(INFO));
 /* An example of an alternate C-blas interface (e.g., ACML) */
 #ifdef CBLAS
-  dpotrf_ (_UPLO, &_N, _A, &_LDA, &_INFO);
+  dpotrf (_UPLO, &_N, _A, &_LDA, &_INFO);
 #elif REFBLAS
 /* Standard Fortran interface without underscoring */
   int8_dpotrf (_UPLO, &_N, _A, &_LDA, &_INFO);
 #else
-/* Standard Fortran interface from R's blas */
+/* Standard Fortran interface from R's lapack */
   dpotrf_ (_UPLO, &_N, _A, &_LDA, &_INFO);
 #endif
   PROTECT(ans = A);
-  unprotect(1);
+  Rf_unprotect(1);
   return ans;
 }
 
@@ -226,9 +283,9 @@ SEXP dpotrf_wrapper(SEXP UPLO, SEXP N, SEXP A, SEXP LDA, SEXP INFO, SEXP A_isBM)
  * in order to use daxpy
  */
 
-
+// [[Rcpp::export]]
 SEXP
-dadd(SEXP N, SEXP ALPHA, SEXP Y, SEXP Y_isBM, SEXP SIGN, SEXP ALPHA_LHS) {
+dadd_wrapper(SEXP N, SEXP ALPHA, SEXP Y, SEXP Y_isBM, SEXP SIGN, SEXP ALPHA_LHS) {
   SEXP ans;
   double *pY;
   INT NN = (INT) * (DOUBLE_DATA(N));
@@ -251,7 +308,7 @@ dadd(SEXP N, SEXP ALPHA, SEXP Y, SEXP Y_isBM, SEXP SIGN, SEXP ALPHA_LHS) {
       pY[i] += sign*alpha;
     }
   }
-  unprotect(1);
+  Rf_unprotect(1);
   return ans;
 }
 
@@ -263,6 +320,7 @@ dadd(SEXP N, SEXP ALPHA, SEXP Y, SEXP Y_isBM, SEXP SIGN, SEXP ALPHA_LHS) {
  * The contents of Y are *replaced* by this routine and a reference
  * to Y is returned.
  */
+// [[Rcpp::export]]
 SEXP
 dgeqrf_wrapper (SEXP M, SEXP N, SEXP Y, SEXP LDA, SEXP TAU, SEXP WORK,
                 SEXP LWORK, SEXP INFO, SEXP A_isBM, SEXP TAU_isBM, 
@@ -279,7 +337,7 @@ dgeqrf_wrapper (SEXP M, SEXP N, SEXP Y, SEXP LDA, SEXP TAU, SEXP WORK,
   INT INFOi = (INT) * (DOUBLE_DATA (INFO));
   
   PROTECT(ans = Y);
-  PROTECT(Tr = allocVector(LGLSXP, 1));
+  PROTECT(Tr = Rf_allocVector(LGLSXP, 1));
   LOGICAL(Tr)[0] = 1;
   pY = make_double_ptr (Y, Tr);
   
@@ -296,7 +354,7 @@ dgeqrf_wrapper (SEXP M, SEXP N, SEXP Y, SEXP LDA, SEXP TAU, SEXP WORK,
  */
   dgeqrf_ (&MM, &NN, pY, &LDAi, pTAU, pWORK, &LWORKi, &INFOi);
 #endif
-  unprotect(2);
+  Rf_unprotect(2);
   return ans;
 }
 
@@ -304,6 +362,7 @@ dgeqrf_wrapper (SEXP M, SEXP N, SEXP Y, SEXP LDA, SEXP TAU, SEXP WORK,
 // Unsure if there is a 'proper' BLAS function for the following functions
 
 // element-wise matrix multiplcation
+// [[Rcpp::export]]
 SEXP
 dgeemm_wrapper (SEXP N, SEXP X, SEXP Y, SEXP Z, SEXP X_isBM, SEXP Y_isBM){
   SEXP ans, Tr;
@@ -314,7 +373,7 @@ dgeemm_wrapper (SEXP N, SEXP X, SEXP Y, SEXP Z, SEXP X_isBM, SEXP Y_isBM){
 //  pY = make_double_ptr(Y, Y_isBM);
   
   PROTECT(ans = Z);
-  PROTECT(Tr = allocVector(LGLSXP, 1));
+  PROTECT(Tr = Rf_allocVector(LGLSXP, 1));
   LOGICAL(Tr)[0] = 1;
   pZ = make_double_ptr (Z, Tr);
   
@@ -359,12 +418,13 @@ dgeemm_wrapper (SEXP N, SEXP X, SEXP Y, SEXP Z, SEXP X_isBM, SEXP Y_isBM){
             case 1 : pZ[i] = pX[i]*pY[i]; 
         }
     } 
-    unprotect(2);
+    Rf_unprotect(2);
     return ans;
 }
 
 
 // element-wise matrix division
+// [[Rcpp::export]]
 SEXP
 dgeemd_wrapper (SEXP N, SEXP X, SEXP Y, SEXP Z, SEXP X_isBM, SEXP Y_isBM){
   SEXP ans, Tr;
@@ -375,7 +435,7 @@ dgeemd_wrapper (SEXP N, SEXP X, SEXP Y, SEXP Z, SEXP X_isBM, SEXP Y_isBM){
 //  pY = make_double_ptr(Y, Y_isBM);
   
   PROTECT(ans = Z);
-  PROTECT(Tr = allocVector(LGLSXP, 1));
+  PROTECT(Tr = Rf_allocVector(LGLSXP, 1));
   LOGICAL(Tr)[0] = 1;
   pZ = make_double_ptr (Z, Tr);
   
@@ -421,12 +481,13 @@ dgeemd_wrapper (SEXP N, SEXP X, SEXP Y, SEXP Z, SEXP X_isBM, SEXP Y_isBM){
             case 1 : pZ[i] = pX[i] / pY[i]; 
         }
     } 
-    unprotect(2);
+    Rf_unprotect(2);
     return ans;
 }
 
 
 // Scalar-matrix division
+// [[Rcpp::export]]
 SEXP
 dgesmd_wrapper (SEXP N, SEXP A, SEXP Y, SEXP Y_isBM, SEXP ALPHA_LHS) {
   SEXP ans;
@@ -505,14 +566,15 @@ dgesmd_wrapper (SEXP N, SEXP A, SEXP Y, SEXP Y_isBM, SEXP ALPHA_LHS) {
       }
   }
   
-  unprotect(1);
+  Rf_unprotect(1);
   return ans;
 }
 
 
 // Power
+// [[Rcpp::export]]
 SEXP
-dgepow(SEXP N, SEXP EXP, SEXP Y, SEXP Y_isBM) {
+dgepow_wrapper(SEXP N, SEXP EXP, SEXP Y, SEXP Y_isBM) {
   SEXP ans;
   double *pY;
   INT NN = (INT) * (DOUBLE_DATA(N));
@@ -525,14 +587,37 @@ dgepow(SEXP N, SEXP EXP, SEXP Y, SEXP Y_isBM) {
     pY[i] = pow(pY[i], PP);
   }
   
-  unprotect(1);
+  Rf_unprotect(1);
   return ans;
 }
 
+//// [[Rcpp::export]]
+//SEXP
+//dgepow_arma(SEXP pBigMat, SEXP EXP) {
+//  
+//  Rcpp::XPtr<BigMatrix> xpMat(pBigMat);
+//  // convert to arma matrix - false reuses memory
+//  arma::mat BM_arma((double *)xpMat->matrix(), 
+//                            xpMat->nrow(), 
+//                            xpMat->ncol(), 
+//                            false);
+//                  
+//  arma::mat ret_arma = pow(BM_arma, Rcpp::as<double>(EXP));
+//  
+////    SEXP address = R_MakeExternalPtr( dynamic_cast<BigMatrix*>(pMat),
+////      R_NilValue, R_NilValue);
+////    R_RegisterCFinalizerEx(address, (R_CFinalizer_t) CDestroyBigMatrix, 
+////      (Rboolean) TRUE);
+////    return address;
+//  Rcpp::XPtr<BigMatrix> pMatRet(Rcpp::wrap(ret_arma));
+//  return pMatRet;
+//}
+
 
 // common logarithm
+// [[Rcpp::export]]
 SEXP
-dgeclog(SEXP N, SEXP Y, SEXP Y_isBM) {
+dgeclog_wrapper(SEXP N, SEXP Y, SEXP Y_isBM) {
   SEXP ans;
   double *pY;
   INT NN = (INT) * (DOUBLE_DATA(N));
@@ -544,13 +629,14 @@ dgeclog(SEXP N, SEXP Y, SEXP Y_isBM) {
     pY[i] = log10(pY[i]);
   }
   
-  unprotect(1);
+  Rf_unprotect(1);
   return ans;
 }
 
 // base logarithm
+// [[Rcpp::export]]
 SEXP
-dgelog(SEXP N, SEXP BASE, SEXP Y, SEXP Y_isBM) {
+dgelog_wrapper(SEXP N, SEXP BASE, SEXP Y, SEXP Y_isBM) {
   SEXP ans;
   double *pY;
   INT NN = (INT) * (DOUBLE_DATA(N));
@@ -563,13 +649,14 @@ dgelog(SEXP N, SEXP BASE, SEXP Y, SEXP Y_isBM) {
     pY[i] = log10(pY[i])/log10(BB);
   }
   
-  unprotect(1);
+  Rf_unprotect(1);
   return ans;
 }
 
 // Exponential function
+// [[Rcpp::export]]
 SEXP
-dgeexp(SEXP N, SEXP Y, SEXP Y_isBM) {
+dgeexp_wrapper(SEXP N, SEXP Y, SEXP Y_isBM) {
   SEXP ans;
   double *pY;
   INT NN = (INT) * (DOUBLE_DATA(N));
@@ -581,13 +668,14 @@ dgeexp(SEXP N, SEXP Y, SEXP Y_isBM) {
     pY[i] = exp(pY[i]);
   }
   
-  unprotect(1);
+  Rf_unprotect(1);
   return ans;
 }
 
 // hyperbolic tangent
+// [[Rcpp::export]]
 SEXP
-dgetanh(SEXP N, SEXP Y, SEXP Y_isBM) {
+dgetanh_wrapper(SEXP N, SEXP Y, SEXP Y_isBM) {
   SEXP ans;
   double *pY;
   INT NN = (INT) * (DOUBLE_DATA(N));
@@ -599,13 +687,14 @@ dgetanh(SEXP N, SEXP Y, SEXP Y_isBM) {
     pY[i] = tanh(pY[i]);
   }
   
-  unprotect(1);
+  Rf_unprotect(1);
   return ans;
 }
 
 // hyperbolic cosine
+// [[Rcpp::export]]
 SEXP
-dgecosh(SEXP N, SEXP Y, SEXP Y_isBM) {
+dgecosh_wrapper(SEXP N, SEXP Y, SEXP Y_isBM) {
   SEXP ans;
   double *pY;
   INT NN = (INT) * (DOUBLE_DATA(N));
@@ -617,13 +706,14 @@ dgecosh(SEXP N, SEXP Y, SEXP Y_isBM) {
     pY[i] = cosh(pY[i]);
   }
   
-  unprotect(1);
+  Rf_unprotect(1);
   return ans;
 }
 
 // hyperbolic sine
+// [[Rcpp::export]]
 SEXP
-dgesinh(SEXP N, SEXP Y, SEXP Y_isBM) {
+dgesinh_wrapper(SEXP N, SEXP Y, SEXP Y_isBM) {
   SEXP ans;
   double *pY;
   INT NN = (INT) * (DOUBLE_DATA(N));
@@ -635,6 +725,6 @@ dgesinh(SEXP N, SEXP Y, SEXP Y_isBM) {
     pY[i] = sinh(pY[i]);
   }
   
-  unprotect(1);
+  Rf_unprotect(1);
   return ans;
 }

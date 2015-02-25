@@ -1,3 +1,8 @@
+#' @useDynLib bigalgebra
+#' @import methods
+#' @importFrom bigmemory typeof
+
+#' @export
 setMethod("%*%",signature(x="big.matrix", y="big.matrix"),
   function(x,y) 
   {
@@ -6,6 +11,7 @@ setMethod("%*%",signature(x="big.matrix", y="big.matrix"),
   valueClass="big.matrix"
 )
 
+#' @export
 setMethod("%*%",signature(x="matrix", y="big.matrix"),
   function(x,y)
   {
@@ -17,6 +23,7 @@ setMethod("%*%",signature(x="matrix", y="big.matrix"),
   valueClass="matrix"
 )
 
+#' @export
 setMethod("%*%",signature(x="big.matrix", y="matrix"),
   function(x,y) 
   {
@@ -28,6 +35,7 @@ setMethod("%*%",signature(x="big.matrix", y="matrix"),
   valueClass="matrix"
 )
 
+#' @export
 setMethod("Arith",c(e1="big.matrix", e2="big.matrix"),
   function(e1,e2) 
   {
@@ -41,6 +49,8 @@ setMethod("Arith",c(e1="big.matrix", e2="big.matrix"),
     )
   }
 )
+
+#' @export
 setMethod("Arith",c(e1="big.matrix", e2="matrix"),
   function(e1,e2) 
   {
@@ -54,6 +64,8 @@ setMethod("Arith",c(e1="big.matrix", e2="matrix"),
     )
   }
 )
+
+#' @export
 setMethod("Arith",c(e1="matrix", e2="big.matrix"),
   function(e1,e2) 
   {
@@ -67,6 +79,8 @@ setMethod("Arith",c(e1="matrix", e2="big.matrix"),
     )
   }
 )
+
+#' @export
 setMethod("Arith",c(e1="numeric", e2="big.matrix"),
   function(e1,e2) 
   {
@@ -84,6 +98,8 @@ setMethod("Arith",c(e1="numeric", e2="big.matrix"),
     stop("e1 is not a scalar")
   }
 )
+
+#' @export
 setMethod("Arith",c(e1="big.matrix", e2="numeric"),
   function(e1,e2) 
   {
@@ -103,6 +119,7 @@ setMethod("Arith",c(e1="big.matrix", e2="numeric"),
   }
 )
 
+#' @export
 setMethod("Math", c(x="big.matrix"),
           function(x)
           {
@@ -119,6 +136,7 @@ setMethod("Math", c(x="big.matrix"),
           }
 )
 
+#' @export
 setMethod("log", signature(x="big.matrix"),
           function(x, base=exp(1))
           {
@@ -126,6 +144,7 @@ setMethod("log", signature(x="big.matrix"),
           }
 )
 
+#' @export
 setMethod("qr", c(x="big.matrix"),
           function(x, ...)
             {

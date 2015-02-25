@@ -9,6 +9,7 @@ is_transposed = function( tcode )
 
 # Throws an error if the matrix A is not among the listed classes
 # and types, and returns TRUE if A is a big.matrix, FALSE otherwise.
+#' @importFrom bigmemory typeof
 check_matrix = function(A, classes=c('big.matrix', 'matrix'), 
   types='double')
 {
