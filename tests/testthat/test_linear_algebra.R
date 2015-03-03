@@ -2,28 +2,21 @@ library("bigalgebra")
 context("linear algebra tests")
 
 mat <- matrix(1:9, 
-              ncol = 3, 
-              nrow = 3, 
-              dimnames = list(letters[1:3], LETTERS[1:3]))
+              ncol = 3)
 mat2 <- matrix(1:9, 
-              ncol = 3, 
-              nrow = 3, 
-              dimnames = list(letters[1:3], LETTERS[1:3]))
+              ncol = 3)
+mat3 <- matrix(1:12, 
+               ncol = 4)
+
 
 # set as type double
 storage.mode(mat) <- "double"
 storage.mode(mat2) <- "double"
+storage.mode(mat3) <- "double"
 
 bm <- as.big.matrix(mat, type="double")
 bm2 <- as.big.matrix(mat2, type="double")
-
-C <- bigalgebra:::anon_matrix(3, 3, "double")
-
-bigalgebra:::dgemm_wrapper2(A=bm@address, 
-                            B=bm2@address, 
-                            C=C@address,
-                            TRUE, TRUE, TRUE)[,]
-# bm[,]%*%bm2[,]
+bm3 <- as.big.matrix(mat3, type="double")
 
 test_that("matrix multiplication successful",{
   R_mat <- mat %*% mat2
@@ -33,6 +26,7 @@ test_that("matrix multiplication successful",{
   expect_equivalent(R_mat, BM_mat[,])
   expect_equivalent(R_mat, R_BM_mat[,])
   expect_equivalent(R_mat, BM_R_mat[,])
+  expect_error(bm3 %*% bm2)
 })
 
 test_that("matrix addition successful", {
@@ -53,6 +47,14 @@ test_that("matrix subtraction successful", {
   expect_equivalent(R_mat_m, BM_mat_m[,])
 })
 
+test_that("scalar matrix mutliplication successful", {
+  R_mat <- 3 * mat
+  BM_mat_sm <- 3 * bm
+  BM_mat_ms <- bm * 3
+  expect_equivalent(R_mat, BM_mat_sm[,])
+  expect_equivalent(R_mat, BM_mat_ms[,])
+})
+
 test_that("matrix element-wise multiplication successful", {
   R_mat <- mat * mat2
   BM_mat <- bm * bm2
@@ -61,6 +63,7 @@ test_that("matrix element-wise multiplication successful", {
   expect_equivalent(R_mat, BM_mat[,])
   expect_equivalent(R_mat, R_BM_mat[,])
   expect_equivalent(R_mat, BM_R_mat[,])
+  expect_error(bm3 * bm2)
 })
 
 test_that("matrix element-wise division successful", {
@@ -77,6 +80,7 @@ test_that("matrix element-wise division successful", {
   expect_equivalent(R_mat, BM_R_mat[,])
   expect_equivalent(R_mat_s_num, BM_mat_s_num[,])
   expect_equivalent(R_mat_s_denom, BM_mat_s_denom[,])
+  expect_error(bm3 / bm2)
 })
 
 test_that("matrix power is successful", {
@@ -106,3 +110,18 @@ test_that("math functions successful", {
   expect_equivalent(R_mat_cosh, BM_mat_cosh[,])
   expect_equivalent(R_mat_tanh, BM_mat_tanh[,])
 })
+
+test_that("QR matrix decomposition successful", {
+  BM_QR <- qr(bm)
+  expect_true(all(sapply(BM_QR, function(x) class(x) == "big.matrix")))
+  expect_equivalent(BM_QR$Q[] %*% BM_QR$R[], bm[])
+})
+
+test_that("Choleski matrix decomposition successful", {
+  BM_CHOL <- chol(bm)
+  expect_true(all(sapply(BM_CHOL, function(x) class(x) == "big.matrix")))
+  expect_equivalent(BM_QR$Q[] %*% BM_QR$R[], bm[])
+})
+
+m <- matrix(c(5,1,1,3),2,2)
+chol(m)

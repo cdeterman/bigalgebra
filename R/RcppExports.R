@@ -12,10 +12,6 @@ dgemm_wrapper <- function(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, 
     .Call('bigalgebra_dgemm_wrapper', PACKAGE = 'bigalgebra', TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, LDC, A_isBM, B_isBM, C_isBM, C_offset)
 }
 
-dgemm_wrapper2 <- function(A, B, C, A_isBM, B_isBM, C_isBM) {
-    .Call('bigalgebra_dgemm_wrapper2', PACKAGE = 'bigalgebra', A, B, C, A_isBM, B_isBM, C_isBM)
-}
-
 daxpy_wrapper <- function(N, A, X, Y, X_isBM) {
     .Call('bigalgebra_daxpy_wrapper', PACKAGE = 'bigalgebra', N, A, X, Y, X_isBM)
 }
@@ -24,51 +20,51 @@ dpotrf_wrapper <- function(UPLO, N, A, LDA, INFO, A_isBM) {
     .Call('bigalgebra_dpotrf_wrapper', PACKAGE = 'bigalgebra', UPLO, N, A, LDA, INFO, A_isBM)
 }
 
-dadd_wrapper <- function(N, ALPHA, Y, Y_isBM, SIGN, ALPHA_LHS) {
-    .Call('bigalgebra_dadd_wrapper', PACKAGE = 'bigalgebra', N, ALPHA, Y, Y_isBM, SIGN, ALPHA_LHS)
+dadd_wrapper <- function(ALPHA, Y, Y_isBM, SIGN) {
+    .Call('bigalgebra_dadd_wrapper', PACKAGE = 'bigalgebra', ALPHA, Y, Y_isBM, SIGN)
 }
 
-dgeqrf_wrapper <- function(M, N, Y, LDA, TAU, WORK, LWORK, INFO, A_isBM, TAU_isBM, WORK_isBM) {
-    .Call('bigalgebra_dgeqrf_wrapper', PACKAGE = 'bigalgebra', M, N, Y, LDA, TAU, WORK, LWORK, INFO, A_isBM, TAU_isBM, WORK_isBM)
+dgeqrf_wrapper <- function(Y, Q, R) {
+    .Call('bigalgebra_dgeqrf_wrapper', PACKAGE = 'bigalgebra', Y, Q, R)
 }
 
-dgeemm_wrapper <- function(N, X, Y, Z, X_isBM, Y_isBM) {
-    .Call('bigalgebra_dgeemm_wrapper', PACKAGE = 'bigalgebra', N, X, Y, Z, X_isBM, Y_isBM)
+dgeemm_wrapper <- function(X, Y, X_isBM) {
+    .Call('bigalgebra_dgeemm_wrapper', PACKAGE = 'bigalgebra', X, Y, X_isBM)
 }
 
-dgeemd_wrapper <- function(N, X, Y, Z, X_isBM, Y_isBM) {
-    .Call('bigalgebra_dgeemd_wrapper', PACKAGE = 'bigalgebra', N, X, Y, Z, X_isBM, Y_isBM)
+dgeemd_wrapper <- function(X, Y, X_isBM) {
+    .Call('bigalgebra_dgeemd_wrapper', PACKAGE = 'bigalgebra', X, Y, X_isBM)
 }
 
-dgesmd_wrapper <- function(N, A, Y, Y_isBM, ALPHA_LHS) {
-    .Call('bigalgebra_dgesmd_wrapper', PACKAGE = 'bigalgebra', N, A, Y, Y_isBM, ALPHA_LHS)
+dgesmd_wrapper <- function(A, Y, Y_isBM, ALPHA_LHS) {
+    .Call('bigalgebra_dgesmd_wrapper', PACKAGE = 'bigalgebra', A, Y, Y_isBM, ALPHA_LHS)
 }
 
-dgepow_wrapper <- function(N, EXP, Y, Y_isBM) {
-    .Call('bigalgebra_dgepow_wrapper', PACKAGE = 'bigalgebra', N, EXP, Y, Y_isBM)
+dgepow_wrapper <- function(EXP, Y) {
+    .Call('bigalgebra_dgepow_wrapper', PACKAGE = 'bigalgebra', EXP, Y)
 }
 
-dgeclog_wrapper <- function(N, Y, Y_isBM) {
-    .Call('bigalgebra_dgeclog_wrapper', PACKAGE = 'bigalgebra', N, Y, Y_isBM)
+dgeclog_wrapper <- function(Y) {
+    .Call('bigalgebra_dgeclog_wrapper', PACKAGE = 'bigalgebra', Y)
 }
 
-dgelog_wrapper <- function(N, BASE, Y, Y_isBM) {
-    .Call('bigalgebra_dgelog_wrapper', PACKAGE = 'bigalgebra', N, BASE, Y, Y_isBM)
+dgelog_wrapper <- function(BASE, Y) {
+    .Call('bigalgebra_dgelog_wrapper', PACKAGE = 'bigalgebra', BASE, Y)
 }
 
-dgeexp_wrapper <- function(N, Y, Y_isBM) {
-    .Call('bigalgebra_dgeexp_wrapper', PACKAGE = 'bigalgebra', N, Y, Y_isBM)
+dgeexp_wrapper <- function(Y) {
+    .Call('bigalgebra_dgeexp_wrapper', PACKAGE = 'bigalgebra', Y)
 }
 
-dgetanh_wrapper <- function(N, Y, Y_isBM) {
-    .Call('bigalgebra_dgetanh_wrapper', PACKAGE = 'bigalgebra', N, Y, Y_isBM)
+dgetanh_wrapper <- function(Y) {
+    .Call('bigalgebra_dgetanh_wrapper', PACKAGE = 'bigalgebra', Y)
 }
 
-dgecosh_wrapper <- function(N, Y, Y_isBM) {
-    .Call('bigalgebra_dgecosh_wrapper', PACKAGE = 'bigalgebra', N, Y, Y_isBM)
+dgecosh_wrapper <- function(Y) {
+    .Call('bigalgebra_dgecosh_wrapper', PACKAGE = 'bigalgebra', Y)
 }
 
-dgesinh_wrapper <- function(N, Y, Y_isBM) {
-    .Call('bigalgebra_dgesinh_wrapper', PACKAGE = 'bigalgebra', N, Y, Y_isBM)
+dgesinh_wrapper <- function(Y) {
+    .Call('bigalgebra_dgesinh_wrapper', PACKAGE = 'bigalgebra', Y)
 }
 

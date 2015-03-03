@@ -37,212 +37,74 @@ dcopy = function(N=NULL, X, INCX=1, Y, INCY=1)
   return(0)
 }
 
-# Add a scalar to each element of a matrix
-# Y := Y+SIGN*ALPHA 
-dadd = function(Y, ALPHA, SIGN=1, ALPHA_LHS=1)
-{
-  if (!is.numeric(ALPHA) || length(ALPHA) != 1)
-    stop("ALPHA is not a scalar numeric value")
-  Y.is.bm = check_matrix(Y)
-  if (Y.is.bm) {
-    ret = deepcopy(Y)
-  } else {
-    ret = Y
-  }
-  N = as.double(nrow(Y)) * as.double(ncol(Y))
-#   .Call('dadd', N, as.double(ALPHA), ret, Y.is.bm, as.double(SIGN), 
-#         as.integer(ALPHA_LHS))
-  dadd_wrapper(N, as.double(ALPHA), ret, Y.is.bm, as.double(SIGN), 
-      as.integer(ALPHA_LHS))  
-  return(ret)
-}
 
-dgesmd = function(Y, ALPHA, ALPHA_LHS=0)
-{
-  if (!is.numeric(ALPHA) || length(ALPHA) != 1)
-    stop("ALPHA is not a scalar numeric value")
-  Y.is.bm = check_matrix(Y)
-  if (Y.is.bm) {
-    ret = deepcopy(Y)
-  } else {
-    ret = Y
-  }
-  N = as.double(nrow(Y)) * as.double(ncol(Y))
-  dgesmd_wrapper(N, as.double(ALPHA), ret, Y.is.bm, 
-        as.integer(ALPHA_LHS))
-  return(ret)
-}
-
-# Add two matrices.
-# Y := ALPHA * X + Y
-
-#' @export
-daxpy = function(N=NULL, ALPHA=1, X, INCX=1, Y, INCY=1)
-{  
-  Y.is.bm = check_matrix(Y)
-  X.is.bm = check_matrix(X)
-  
-  if (is.null(N))
-  {
-    N = as.double(nrow(X))*as.double(ncol(X))
-  }
-  
-  daxpy_wrapper(as.double(N), as.double(ALPHA), X, as.double(INCX),
-    Y, as.double(INCY), X.is.bm, Y.is.bm)
-  return(0)
-}
-
-# Element-wise Matrix Multiplication
-# C := A * B
-dgeemm = function(A, B) 
-{
-  A.is.bm = check_matrix(A)
-  B.is.bm = check_matrix(B)
-  
-  if(!all(dim(A) == dim(B))){
-    stop("Error: Matrix dimensions must be equal")
-  }
-  
-  N = as.double(nrow(B)) * as.double(ncol(A)) 
-  
-  if(B.is.bm) {
-    C = deepcopy(B)
-  } else {
-    C = B
-  }
-    
-  dgeemm_wrapper(as.double(N), A, C,
-        A.is.bm, B.is.bm)
-  return(C)
-}
-
-# Element-wise Matrix Multiplication
-# C := A * B
-dgeemd = function(A, B) 
-{
-  A.is.bm = check_matrix(A)
-  B.is.bm = check_matrix(B)
-  
-  if(!all(dim(A) == dim(B))){
-    stop("Error: Matrix dimensions must be equal")
-  }
-  
-  N = as.double(nrow(B)) * as.double(ncol(A)) 
-  
-  if(B.is.bm) {
-    C = deepcopy(B)
-  } else {
-    C = B
-  }
-  
-  dgeemd_wrapper(as.double(N), A, C,
-        A.is.bm, B.is.bm)
-  return(C)
-}
-
-
-# Matrix Multiply
-# C := ALPHA * op(A) * op(B) + BETA * C
-# This is function provides dgemm functionality.  The matrix types
-# are handled on the C++ side.
-dgemm = function(TRANSA='n', TRANSB='n', M=NULL, N=NULL, K=NULL,
-  ALPHA=1, A, LDA=NULL, B, LDB=NULL, BETA=0, C, LDC=NULL, COFF=0) 
-{
-  A.is.bm = check_matrix(A)
-  B.is.bm = check_matrix(B)
-  C.is.bm = check_matrix(C)
-  # The matrices look OK.  Now, if they haven't been specified, let's
-  # specify some reasonable dimension information.
-  if ( is.null(M) )
-  {
-    M = ifelse ( is_transposed(TRANSA), ncol(A), nrow(A) )
-  }
-  if ( is.null(N) ) 
-  {
-    N = ifelse ( is_transposed(TRANSB), nrow(B), ncol(B) )
-  }
-  if ( is.null(K) )
-  {
-    K = ifelse ( is_transposed(TRANSA), nrow(A), ncol(A) )
-  }
-  if ( is.null(LDA) ) LDA = nrow (A)
-  if ( is.null(LDB) ) LDB = nrow (B)
-  if ( is.null(LDC) ) LDC = nrow (C)
-
-  dgemm_wrapper(as.character(TRANSA), as.character(TRANSB),
-    as.double(M), as.double(N), as.double(K), as.double(ALPHA), A, 
-    as.double(LDA), B, as.double(LDB),
-    as.double(BETA), C, as.double(LDC), as.logical(A.is.bm), 
-    as.logical(B.is.bm), as.logical(C.is.bm), COFF)
-  return(invisible(C))
-}
 
 # QR factorization
 # return 0 if successful, -i if ith argument has illegal value
-dgeqrf=function(M=NULL, N=NULL, A, LDA=NULL, TAU=NULL, WORK=NULL,
-  LWORK=NULL)
-{
-  A.is.bm = check_matrix(A)
-  if (is.null(M))
-  {
-    M = nrow(A)
-  }
-  if (is.null(N))
-  {
-    N = ncol(A)
-  }
-  if (is.null(LDA))
-  {
-    LDA = nrow(A)
-  }
-  if (is.null(TAU))
-  {
-    TAU = as.matrix(rep(0.0, min(M,N)))
-  }
-  if (is.null(LWORK))
-  {
-    LWORK = max(1, N)
-  }
-  if (is.null(WORK))
-  { 
-    WORK = as.matrix(rep(0.0, max(1, LWORK)))
-  }
-  TAU.is.bm = check_matrix(TAU)
-  WORK.is.bm = check_matrix(WORK)
-  INFO = 0
-  
-  Y.is.bm = check_matrix(Y)
-  if(A.is.bm) {
-    ret = deepcopy(A)
-  } else {
-    ret = A
-  }
-  
-  dgeqrf_wrapper(as.double(M), as.double(N), ret, as.double(LDA), 
-    TAU, WORK, as.double(LWORK), as.double(INFO), A.is.bm, TAU.is.bm, 
-    WORK.is.bm)
-  return(ret)
-}
+# dgeqrf=function(M=NULL, N=NULL, A, LDA=NULL, TAU=NULL, WORK=NULL,
+#   LWORK=NULL)
+# {
+#   A.is.bm = check_matrix(A)
+#   if (is.null(M))
+#   {
+#     M = nrow(A)
+#   }
+#   if (is.null(N))
+#   {
+#     N = ncol(A)
+#   }
+#   if (is.null(LDA))
+#   {
+#     LDA = nrow(A)
+#   }
+#   if (is.null(TAU))
+#   {
+#     TAU = as.matrix(rep(0.0, min(M,N)))
+#   }
+#   if (is.null(LWORK))
+#   {
+#     LWORK = max(1, N)
+#   }
+#   if (is.null(WORK))
+#   { 
+#     WORK = as.matrix(rep(0.0, max(1, LWORK)))
+#   }
+#   TAU.is.bm = check_matrix(TAU)
+#   WORK.is.bm = check_matrix(WORK)
+#   INFO = 0
+#   
+#   Y.is.bm = check_matrix(Y)
+#   if(A.is.bm) {
+#     ret = deepcopy(A)
+#   } else {
+#     ret = A
+#   }
+#   
+#   dgeqrf_wrapper(as.double(M), as.double(N), ret, as.double(LDA), 
+#     TAU, WORK, as.double(LWORK), as.double(INFO), A.is.bm, TAU.is.bm, 
+#     WORK.is.bm)
+#   return(ret)
+# }
 
-# Cholesky factorization
-# return 0 if successful, <0 if -i-th argument is invalid, > 0 if leading minor
-# is not positive definite
-dpotrf=function(UPLO='U', N=NULL, A, LDA=NULL)
-{
-  if (is.null(N))
-  {
-    N = ncol(A)
-  }
-  if (is.null(LDA))
-  {
-    LDA = nrow(A)
-  }
-  A.is.bm = check_matrix(A)
-  INFO = 0
-  dpotrf_wrapper(as.character(UPLO), as.double(N), A, as.double(LDA),
-    as.double(INFO), A.is.bm)
-  return(INFO)
-}
+# # Cholesky factorization
+# # return 0 if successful, <0 if -i-th argument is invalid, > 0 if leading minor
+# # is not positive definite
+# dpotrf=function(UPLO='U', N=NULL, A, LDA=NULL)
+# {
+#   if (is.null(N))
+#   {
+#     N = ncol(A)
+#   }
+#   if (is.null(LDA))
+#   {
+#     LDA = nrow(A)
+#   }
+#   A.is.bm = check_matrix(A)
+#   INFO = 0
+#   dpotrf_wrapper(as.character(UPLO), as.double(N), A, as.double(LDA),
+#     as.double(INFO), A.is.bm)
+#   return(INFO)
+# }
 
 # General eigenvalue
 # return 0 if successful, <0 i-th argument has illegal value, >0 QR 
@@ -367,126 +229,4 @@ dgesdd = function( JOBZ='A', M=NULL, N=NULL, A, LDA=NULL, S, U, LDU=NULL,
     as.double(LWORK), as.double(INFO), A.is.bm, S.is.bm, U.is.bm, VT.is.bm, 
     WORK.is.bm)
   return(INFO)
-}
-
-
-
-
-# Power of matrix elements
-# Y := POW(Y, B)
-dgepow = function(Y, EXP)
-{
-  Y.is.bm = check_matrix(Y)
-  if(Y.is.bm) {
-    ret = deepcopy(Y)
-  } else {
-    ret = Y
-  }
-  N = as.double(nrow(Y)) * as.double(ncol(Y)) 
-  dgepow_wrapper(N, EXP, ret, Y.is.bm)
-  return(ret)
-}
-
-# dgepow2 = function(Y, EXP)
-# {
-#   #Y.is.bm = check_matrix(Y)
-#   #ret <- anon_matrix(nrow(Y), ncol(Y), type=typeof(Y))
-#   ans <- .Call('dgepow2', Y, EXP)
-#   return(ans)
-# }
-
-
-# Common log of matrix elements
-# Y := LOG10(Y)
-dgeclog = function(Y)
-{
-  Y.is.bm = check_matrix(Y)
-  if(Y.is.bm) {
-    ret = deepcopy(Y)
-  } else {
-    ret = Y
-  }
-  N = as.double(nrow(Y)) * as.double(ncol(Y)) 
-  dgeclog_wrapper(N, ret, Y.is.bm)
-  return(ret)
-}
-
-
-# Base log of matrix elements
-# Y := LOG(Y, B)
-dgelog = function(Y, BASE)
-{
-  Y.is.bm = check_matrix(Y)
-  if(Y.is.bm) {
-    ret = deepcopy(Y)
-  } else {
-    ret = Y
-  }
-  N = as.double(nrow(Y)) * as.double(ncol(Y)) 
-  dgelog_wrapper(N, BASE, ret, Y.is.bm)
-  return(ret)
-}
-
-
-# Exponential function of matrix elements
-# Y := EXP(Y)
-dgeexp = function(Y)
-{
-  Y.is.bm = check_matrix(Y)
-  if(Y.is.bm) {
-    ret = deepcopy(Y)
-  } else {
-    ret = Y
-  }
-  N = as.double(nrow(Y)) * as.double(ncol(Y)) 
-  dgeexp_wrapper(N, ret, Y.is.bm)
-  return(ret)
-}
-
-
-# Hyperbolic sine of matrix elements
-# Y := SINH(Y)
-dgesinh = function(Y)
-{
-  Y.is.bm = check_matrix(Y)
-  if(Y.is.bm) {
-    ret = deepcopy(Y)
-  } else {
-    ret = Y
-  }
-  N = as.double(nrow(Y)) * as.double(ncol(Y)) 
-  dgesinh_wrapper(N, ret, Y.is.bm)
-  return(ret)
-}
-
-
-# Hyperbolic cosine of matrix elements
-# Y := COSH(Y)
-dgecosh = function(Y)
-{
-  Y.is.bm = check_matrix(Y)
-  if(Y.is.bm) {
-    ret = deepcopy(Y)
-  } else {
-    ret = Y
-  }
-  N = as.double(nrow(Y)) * as.double(ncol(Y)) 
-  dgecosh_wrapper(N, ret, Y.is.bm)
-  return(ret)
-}
-
-
-# Hyperbolic tangent of matrix elements
-# Y := TANH(Y)
-dgetanh = function(Y)
-{
-  Y.is.bm = check_matrix(Y)
-  if(Y.is.bm) {
-    ret = deepcopy(Y)
-  } else {
-    ret = Y
-  }
-  N = as.double(nrow(Y)) * as.double(ncol(Y)) 
-  dgetanh_wrapper(N, ret, Y.is.bm)
-  return(ret)
 }

@@ -18,6 +18,11 @@
 dgemm = function(TRANSA='N', TRANSB='N', M=NULL, N=NULL, K=NULL,
   ALPHA=1, A, LDA=NULL, B, LDB=NULL, BETA=0, C, LDC=NULL, COFF=0) 
 {
+  
+  if(ncol(A) != nrow(B)){
+    stop("matrices are not conformable") 
+  }
+  
   A.is.bm = check_matrix(A)
   B.is.bm = check_matrix(B)
 # The matrices look OK.  Now, if they haven't been specified, let's
@@ -48,6 +53,7 @@ dgemm = function(TRANSA='N', TRANSB='N', M=NULL, N=NULL, K=NULL,
     as.double(BETA), C, as.double(LDC), as.logical(A.is.bm), 
     as.logical(B.is.bm), as.logical(C.is.bm), COFF)
 }
+
 
 # Vector addition and scaling
 # Y := A * X  + Y
@@ -85,6 +91,26 @@ daxpy = function(A=1, X, Y, LHS=1)
   ans
 }
 
+# Add a scalar to each element of a matrix
+# Y := Y+SIGN*ALPHA 
+dadd = function(Y, ALPHA, SIGN)
+{
+  if (!is.numeric(ALPHA) || length(ALPHA) != 1)
+    stop("ALPHA is not a scalar numeric value")
+
+  Y.is.bm = check_matrix(Y)
+  
+  D = dim(Y)
+  M = D[1]
+  N = D[2]
+  
+  Z <- anon_matrix(M,N,val=0.0)
+  Z[] <- Y[]
+  
+  dadd_wrapper(as.double(ALPHA), Z, Y.is.bm, SIGN)  
+  return(Z)
+}
+
 
 # Element-wise Matrix Multiplication
 # C:= A * B
@@ -98,9 +124,9 @@ dgeemm = function(X, Y)
   
   X.is.bm = check_matrix(X,classes=c('big.matrix','matrix','vector','numeric'))
   Y.is.bm = check_matrix(Y, classes=c('big.matrix', 'matrix', 'vector', 'numeric'))
-  
-  # size of matrix
-  L = length(X)
+    
+  # Check conformity of matrices
+  if(length(Y)!=length(X)) stop("Lengths of X and Y must match")
   
   # Dimensions
   D = dim(X)
@@ -109,8 +135,9 @@ dgeemm = function(X, Y)
   
   # create matrix for new values
   Z = anon_matrix(M,N,val=0.0)
+  Z[] = Y[]
 
-  ans = dgeemm_wrapper(as.double(L), X, Y, Z, X.is.bm, Y.is.bm)
+  ans = dgeemm_wrapper(X, Z, X.is.bm)
   
   if(mixed) return(ans[])
   return(ans)
@@ -130,8 +157,8 @@ dgeemd = function(X, Y)
   X.is.bm = check_matrix(X,classes=c('big.matrix','matrix','vector','numeric'))
   Y.is.bm = check_matrix(Y, classes=c('big.matrix', 'matrix', 'vector', 'numeric'))
   
-  # size of matrix
-  L = length(X)
+  # Check conformity of matrices
+  if(length(Y)!=length(X)) stop("Lengths of X and Y must match")
   
   # Dimensions
   D = dim(X)
@@ -140,40 +167,241 @@ dgeemd = function(X, Y)
   
   # create matrix for new values
   Z = anon_matrix(M,N,val=0.0)
+  Z[] = Y[]
   
-  ans = dgeemd_wrapper(as.double(L), X, Y, Z, X.is.bm, Y.is.bm)
+  ans = dgeemd_wrapper(X, Z, X.is.bm)
   
   if(mixed) return(ans[])
   return(ans)
 }
 
+dgesmd = function(Y, ALPHA, ALPHA_LHS=0)
+{
+  if (!is.numeric(ALPHA) || length(ALPHA) != 1)
+    stop("ALPHA is not a scalar numeric value")
+  
+  Y.is.bm = check_matrix(Y)
+  
+  # Dimensions
+  D = dim(Y)
+  M = D[1]
+  N = D[2]
+  
+  # create matrix for new values
+  Z = anon_matrix(M,N,val=0.0)
+  Z[] = Y[]
+  
+  ans <- dgesmd_wrapper(as.double(ALPHA), Z, Y.is.bm, as.integer(ALPHA_LHS))
+  return(ans)
+}
+
+### Old QR code
+# # Matrix QR Decomposition
+# dgeqrf = function(A)
+# {
+#   A.is.bm = check_matrix(A,classes=c('big.matrix','matrix','vector','numeric'))
+#   
+#   # default to a column big matrix output
+#   M = length(A)
+#   L = M
+#   N = 1L
+#   D = dim(A)
+#   if(!is.null(D) && length(D)==2)
+#   {
+#     M = D[1]
+#     N = D[2]
+#   }
+#   TAU = as.matrix(rep(0.0, min(M,N)))
+#   LWORK = max(1, N)
+#   WORK = as.matrix(rep(0.0, max(1, LWORK)))
+#   INFO=0
+#   Y = deepcopy(A, backingfile="")
+#   
+#   A.is.bm = check_matrix(A)
+#   TAU.is.bm = check_matrix(TAU)
+#   WORK.is.bm = check_matrix(WORK)
+# 
+#   ans = dgeqrf_wrapper(as.double(M), as.double(N), Y, LDA=as.double(M), 
+#               as.double(TAU), as.double(WORK), as.double(LWORK), as.double(INFO),
+#               as.logical(A.is.bm), as.logical(TAU.is.bm), as.logical(WORK.is.bm))
+#   return(ans)
+# }
+
+
 # Matrix QR Decomposition
+# Need to create a matrix that cannot be orthonormalized
+# in order to properly test for exceptions when QR fails.
 dgeqrf = function(A)
 {
   A.is.bm = check_matrix(A,classes=c('big.matrix','matrix','vector','numeric'))
   
   # default to a column big matrix output
-  M = length(A)
-  L = M
-  N = 1L
   D = dim(A)
   if(!is.null(D) && length(D)==2)
   {
     M = D[1]
     N = D[2]
   }
-  TAU = as.matrix(rep(0.0, min(M,N)))
-  LWORK = max(1, N)
-  WORK = as.matrix(rep(0.0, max(1, LWORK)))
-  INFO=0
-  Y = deepcopy(A, backingfile="")
   
-  A.is.bm = check_matrix(A)
-  TAU.is.bm = check_matrix(TAU)
-  WORK.is.bm = check_matrix(WORK)
+  # where A is m-by-n, produces an m-by-n upper triangular matrix R 
+  # and an m-by-m unitary matrix Q so that A = Q*R.
+  
+  Q = anon_matrix(M,M,val=0.0)
+  R <- anon_matrix(M,N,val=0.0)
+  
+#   ans = dgeqrf_wrapper(as.double(M), as.double(N), Y, LDA=as.double(M), 
+#                        as.double(TAU), as.double(WORK), as.double(LWORK), as.double(INFO),
+#                        as.logical(A.is.bm), as.logical(TAU.is.bm), as.logical(WORK.is.bm))
 
-  ans = dgeqrf_wrapper(as.double(M), as.double(N), Y, LDA=as.double(M), 
-              as.double(TAU), as.double(WORK), as.double(LWORK), as.double(INFO),
-              as.logical(A.is.bm), as.logical(TAU.is.bm), as.logical(WORK.is.bm))
+  ans = dgeqrf_wrapper(A, Q, R)
+  return(ans)
+}
+
+# Cholesky factorization
+# return 0 if successful, <0 if -i-th argument is invalid, > 0 if leading minor
+# is not positive definite
+dpotrf=function(UPLO='U', N=NULL, A, LDA=NULL)
+{
+  if (is.null(N))
+  {
+    N = ncol(A)
+  }
+  if (is.null(LDA))
+  {
+    LDA = nrow(A)
+  }
+  A.is.bm = check_matrix(A)
+  INFO = 0
+  dpotrf_wrapper(as.character(UPLO), as.double(N), A, as.double(LDA),
+                 as.double(INFO), A.is.bm)
+  return(INFO)
+}
+
+
+# Power of matrix elements
+# Y := POW(Y, B)
+dgepow = function(Y, EXP)
+{  
+  if (!is.numeric(EXP) || length(EXP) != 1)
+    stop("EXP is not a scalar numeric value")
+    
+  # Dimensions
+  D = dim(Y)
+  M = D[1]
+  N = D[2]
+  
+  # create matrix for new values
+  Z = anon_matrix(M,N,val=0.0)
+  Z[] = Y[]
+  
+  ans <- dgepow_wrapper(EXP, Z)
+  return(ans)
+}
+
+
+# Common log of matrix elements
+# Y := LOG10(Y)
+dgeclog = function(Y)
+{
+  # Dimensions
+  D = dim(Y)
+  M = D[1]
+  N = D[2]
+  
+  # create matrix for new values
+  Z = anon_matrix(M,N,val=0.0)
+  Z[] = Y[]
+  
+  ans <- dgeclog_wrapper(Z)
+  return(ans)
+}
+
+
+# Base log of matrix elements
+# Y := LOG(Y, B)
+dgelog = function(Y, BASE)
+{
+  # Dimensions
+  D = dim(Y)
+  M = D[1]
+  N = D[2]
+  
+  # create matrix for new values
+  Z = anon_matrix(M,N,val=0.0)
+  Z[] = Y[]
+  
+  ans <- dgelog_wrapper(BASE, Z)
+  return(ans)
+}
+
+
+# Exponential function of matrix elements
+# Y := EXP(Y)
+dgeexp = function(Y)
+{
+  # Dimensions
+  D = dim(Y)
+  M = D[1]
+  N = D[2]
+  
+  # create matrix for new values
+  Z = anon_matrix(M,N,val=0.0)
+  Z[] = Y[]
+  
+  ans <- dgeexp_wrapper(Z)
+  return(ans)
+}
+
+
+# Hyperbolic sine of matrix elements
+# Y := SINH(Y)
+dgesinh = function(Y)
+{
+  # Dimensions
+  D = dim(Y)
+  M = D[1]
+  N = D[2]
+  
+  # create matrix for new values
+  Z = anon_matrix(M,N,val=0.0)
+  Z[] = Y[]
+  
+  ans <- dgesinh_wrapper(Z)
+  return(ans)
+}
+
+
+# Hyperbolic cosine of matrix elements
+# Y := COSH(Y)
+dgecosh = function(Y)
+{
+  # Dimensions
+  D = dim(Y)
+  M = D[1]
+  N = D[2]
+  
+  # create matrix for new values
+  Z = anon_matrix(M,N,val=0.0)
+  Z[] = Y[]
+  
+  ans <- dgecosh_wrapper(Z)
+  return(ans)
+}
+
+
+# Hyperbolic tangent of matrix elements
+# Y := TANH(Y)
+dgetanh = function(Y)
+{
+  # Dimensions
+  D = dim(Y)
+  M = D[1]
+  N = D[2]
+  
+  # create matrix for new values
+  Z = anon_matrix(M,N,val=0.0)
+  Z[] = Y[]
+  
+  ans <- dgetanh_wrapper(Z)
   return(ans)
 }

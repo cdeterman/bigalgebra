@@ -3,6 +3,7 @@
 
 // add BigMatrix 
 #include "bigmemory/BigMatrix.h"
+#include "bigmemory/MatrixAccessor.hpp"
 
 // condition for 64-bit reference BLAS
 #ifdef REFBLAS
@@ -15,18 +16,22 @@
 #endif
 
 
-//#include <Rcpp.h>
+#define ARMA_NO_DEBUG
+
+/* additional macros that could potentially
+ * help solve the 64-bit issue that requires
+ * the REFBLAS component
+ */
+ 
+//#define ARMA_64BIT_WORD
+//#define ARMA_BLAS_LONG_LONG
+
 #include <RcppArmadillo.h>
-//// [[Rcpp::depends(RcppArmadillo, BH, bigmemory)]]
+// [[Rcpp::depends(RcppArmadillo, BH, bigmemory)]]
 
 #define BLOCKSIZE (8)
 
 using namespace Rcpp;
-
-// provide BigMatrix definitions
-//#include "bigmemory/BigMatrix.h"
-//#include "bigmemory/MatrixAccessor.hpp"
-
 
 // Declare LAPACK functions
 extern "C"
@@ -42,36 +47,12 @@ extern "C"
 
   double *make_double_ptr (SEXP matrix, SEXP isBigMatrix);
 
-//  SEXP dgemm_wrapper (SEXP TRANSA, SEXP TRANSB, SEXP M, SEXP N, SEXP K,
-//                      SEXP ALPHA, SEXP A, SEXP LDA, SEXP B, SEXP LDB,
-//                      SEXP BETA, SEXP C, SEXP LDC, SEXP A_isBM, SEXP B_isBM,
-//                      SEXP C_isBM, SEXP C_offset);
-//  SEXP daxpy_wrapper (SEXP N, SEXP A, SEXP X, SEXP Y, SEXP X_isBM);
-//  SEXP dgeqrf_wrapper (SEXP M, SEXP N, SEXP Y, SEXP LDA, SEXP TAU, SEXP WORK,
-//                        SEXP LWORK, SEXP INFO, SEXP A_isBM, SEXP TAU_isBM, 
-//                        SEXP WORK_isBM);
-//  SEXP dgeemm_wrapper (SEXP N, SEXP X, SEXP Y, SEXP Z, SEXP X_isBM, SEXP Y_isBM);
-//  SEXP dgeemd_wrapper (SEXP N, SEXP X, SEXP Y, SEXP Z, SEXP X_isBM, SEXP Y_isBM);
-//  SEXP dpotrf_wrapper(SEXP UPLO, SEXP N, SEXP A, SEXP LDA, SEXP INFO,
-//                      SEXP A_isBM);
-//  SEXP dadd(SEXP N, SEXP ALPHA, SEXP Y, SEXP Y_isBM, SEXP SIGN, SEXP ALPHA_LHS);
-//  SEXP dgesmd_wrapper (SEXP N, SEXP A, SEXP Y, SEXP Y_isBM, SEXP ALPHA_LHS);
-//  
-//  // Generic Math functions
-//  SEXP dgepow(SEXP N, SEXP EXP, SEXP Y, SEXP Y_isBM);
-//  
-//  // Logarithm functions
-//  SEXP dgeclog(SEXP N, SEXP Y, SEXP Y_isBM);
-//  SEXP dgelog(SEXP N, SEXP BASE, SEXP Y, SEXP Y_isBM);
-//  SEXP dgeexp(SEXP N, SEXP Y, SEXP Y_isBM);
-//  
-//  // Define trignometric functions
-//  SEXP dgecosh(SEXP N, SEXP Y, SEXP Y_isBM);
-//  SEXP dgetanh(SEXP N, SEXP Y, SEXP Y_isBM);
-//  SEXP dgesinh(SEXP N, SEXP Y, SEXP Y_isBM);
-
 #ifdef __cplusplus
 }
+#endif
+
+#if defined(CBLAS) || defined(REFBLAS)
+#define NON_R_BLAS=1
 #endif
 
 //' @useDynLib bigalgebra
@@ -81,19 +62,6 @@ extern "C"
 void hello(){
   std::cout << "hello" << std::endl;
 }
-
-//// [[Rcpp::export]]
-//SEXP
-//returnBM(SEXP pBigMat) {
-//  
-//  Rcpp::XPtr<BigMatrix> xpMat(pBigMat);
-//  // convert to arma matrix - false reuses memory
-//  arma::mat BM_arma((double *)xpMat->matrix(), 
-//                            xpMat->nrow(), 
-//                            xpMat->ncol(), 
-//                            false);
-//}
-                  
 
 /* Pointer utility, returns a double pointer for either a BigMatrix or a
  * standard R matrix.
@@ -135,6 +103,54 @@ make_double_ptr (SEXP matrix, SEXP isBigMatrix)
 
 
 /* Wrappers for miscellaneous BLAS and LAPACK routines. */
+
+/* I have restructured the following functions as the RcppArmadillo
+ * implementation requires far less variables to apply.
+ * As such, the conditional compilation has been altered to
+ * declare the appropriate variables depending upon the
+ * current BLAS implementation used
+ */
+ 
+// simple function to get access to big.matrix objects from R
+Rcpp::XPtr<BigMatrix> BigMatrixXPtr(SEXP A){
+    // declare as S4 object
+    Rcpp::S4 As4(A);
+    // pull address slot
+    SEXP A_address = As4.slot("address");
+    // declare as external pointer
+    Rcpp::XPtr<BigMatrix> xpA(A_address);
+    return xpA;
+ }
+       
+ 
+arma::mat ConvertToArma(SEXP A, SEXP isBM)
+{
+  if(Rf_asLogical(isBM) == (Rboolean) TRUE)
+      { 
+        Rcpp::XPtr<BigMatrix> xpA = BigMatrixXPtr(A);
+        
+        arma::mat Am = arma::mat( (double*) xpA->matrix(),
+                    xpA->nrow(),
+                    xpA->ncol(),
+                    false);
+        return Am;
+      }else{
+        arma::mat Am = Rcpp::as<arma::mat>(A);
+        return Am;
+      }
+}
+
+arma::mat ConvertBMtoArma(SEXP A)
+{
+  Rcpp::XPtr<BigMatrix> xpA = BigMatrixXPtr(A);
+        
+  arma::mat Am = arma::mat( (double*) xpA->matrix(),
+              xpA->nrow(),
+              xpA->ncol(),
+              false);
+  return Am;
+}
+ 
 // [[Rcpp::export]]
 SEXP
 dgemm_wrapper (SEXP TRANSA, SEXP TRANSB, SEXP M, SEXP N, SEXP K,
@@ -142,78 +158,84 @@ dgemm_wrapper (SEXP TRANSA, SEXP TRANSB, SEXP M, SEXP N, SEXP K,
                SEXP C, SEXP LDC, SEXP A_isBM, SEXP B_isBM, SEXP C_isBM,
                SEXP C_offset)
 {
-  long j = *(DOUBLE_DATA (C_offset));
-  double *pA = make_double_ptr (A, A_isBM);
-  double *pB = make_double_ptr (B, B_isBM);
-  double *pC;
-  SEXP ans;
+
   INT MM = (INT) * (DOUBLE_DATA (M));
   INT NN = (INT) * (DOUBLE_DATA (N));
-  INT KK = (INT) * (DOUBLE_DATA (K));
-  INT LDAA = (INT) * (DOUBLE_DATA (LDA));
-  INT LDBB = (INT) * (DOUBLE_DATA (LDB));
-  INT LDCC = (INT) * (DOUBLE_DATA (LDC));
-  if(Rf_asLogical(C_isBM) == (Rboolean) TRUE)
-  {
-/* Return results in a big matrix */
-    pC = make_double_ptr (C, C_isBM) + j;
-    PROTECT(ans = C);
-  } else {
-/* Allocate an output R matrix and return results there
-   XXX Add check for size of MM and NN XXX 
- */
-    PROTECT(ans = Rf_allocMatrix(REALSXP, (int)MM, (int)NN));
-    pC = NUMERIC_DATA(ans);
-  }
-/* An example of an alternate C-blas interface (e.g., ACML) */
-#ifdef CBLAS
-  dgemm (*((char *) CHAR(Rf_asChar (TRANSA))),
-         *((char *) CHAR(Rf_asChar (TRANSB))),
-         MM, NN, KK, *(NUMERIC_DATA (ALPHA)), pA, LDAA, pB,
-         LDBB, *(NUMERIC_DATA (BETA)), pC, LDCC);
-#elif REFBLAS
-/* Standard Fortran interface without underscoring */
-  int8_dgemm ((char *) CHAR(Rf_asChar (TRANSA)),
-         (char *) CHAR(Rf_asChar (TRANSB)),
-         &MM, &NN, &KK, NUMERIC_DATA (ALPHA), pA, &LDAA, pB,
-         &LDBB, NUMERIC_DATA (BETA), pC, &LDCC);
-#else
-/* Standard Fortran interface from R's blas */
-  dgemm_ ((char *) CHAR(Rf_asChar (TRANSA)),
-         (char *) CHAR(Rf_asChar (TRANSB)),
-         &MM, &NN, &KK, NUMERIC_DATA (ALPHA), pA, &LDAA, pB,
-         &LDBB, NUMERIC_DATA (BETA), pC, &LDCC);
-#endif
-  Rf_unprotect(1);
-  return ans;
-}
-
-// [[Rcpp::export]]
-SEXP
-dgemm_wrapper2 (SEXP A, SEXP B, SEXP C, SEXP A_isBM, SEXP B_isBM, SEXP C_isBM)
-{
-  Rcpp::XPtr<BigMatrix> xpA(A);
-  Rcpp::XPtr<BigMatrix> xpB(B);
-  Rcpp::XPtr<BigMatrix> xpC(C);
-  SEXP ans;
   
-  INT NN = xpC->nrow();
-  INT MM = xpC->ncol();
-  double *pC;
-
-  arma::mat Am( (double*) xpA->matrix(),
-                xpA->nrow(),
-                xpA->ncol(),
-                false);
+  #ifdef NON_R_BLAS
+    SEXP ans;
+    long j = *(DOUBLE_DATA (C_offset));
+    double *pA = make_double_ptr (A, A_isBM);
+    double *pB = make_double_ptr (B, B_isBM); 
+    double *pC;
+    INT KK = (INT) * (DOUBLE_DATA (K));
+    INT LDAA = (INT) * (DOUBLE_DATA (LDA));
+    INT LDBB = (INT) * (DOUBLE_DATA (LDB));
+    INT LDCC = (INT) * (DOUBLE_DATA (LDC));
   
-  arma::mat Bm( (double*) xpB->matrix(),
-                xpB->nrow(),
-                xpB->ncol(),
-                false);
-
-  arma::mat Cm = Am * Bm;
-  memcpy(xpC->matrix(), &Cm, NN*MM*sizeof(double));
-  return xpC;
+    if(Rf_asLogical(C_isBM) == (Rboolean) TRUE)
+      {
+        /* Return results in a big matrix */
+        pC = make_double_ptr (C, C_isBM) + j;
+        PROTECT(ans = C);
+      } else {
+        /* Allocate an output R matrix and return results there
+         * XXX Add check for size of MM and NN XXX 
+         */
+        PROTECT(ans = Rf_allocMatrix(REALSXP, (int)MM, (int)NN));
+        pC = NUMERIC_DATA(ans);
+      }
+      
+    /* An example of an alternate C-blas interface (e.g., ACML) */
+    #ifdef CBLAS
+    dgemm (*((char *) CHAR(Rf_asChar (TRANSA))),
+           *((char *) CHAR(Rf_asChar (TRANSB))),
+           MM, NN, KK, *(NUMERIC_DATA (ALPHA)), pA, LDAA, pB,
+           LDBB, *(NUMERIC_DATA (BETA)), pC, LDCC);
+    #elif REFBLAS
+      /* Standard Fortran interface without underscoring */
+      int8_dgemm ((char *) CHAR(Rf_asChar (TRANSA)),
+             (char *) CHAR(Rf_asChar (TRANSB)),
+             &MM, &NN, &KK, NUMERIC_DATA (ALPHA), pA, &LDAA, pB,
+             &LDBB, NUMERIC_DATA (BETA), pC, &LDCC);
+    #else
+    #error "BLAS format not supported"
+    #endif
+    
+    Rf_unprotect(1);
+    return ans;
+    
+  #else
+    /* RcppArmadillo BLAS interface */
+    const arma::mat Am = ConvertToArma(A, A_isBM);
+    const arma::mat Bm = ConvertToArma(B, B_isBM);
+    
+    // RcppArmadillo Matrix Multiplication
+    const arma::mat Cm = Am * Bm;
+    
+    /* Ideally would like to avoid the following loop
+     * would need to consider passing another check for
+     * a separated big.matrix.  The following is required
+     * for a separated big.matrix so it works in both scenarios
+     */
+    
+    if(Rf_asLogical(C_isBM) == (Rboolean) TRUE)
+    {
+      // get BigMatrix external pointer
+      Rcpp::XPtr<BigMatrix> xpC = BigMatrixXPtr(C);
+      // create MatrixAccessor object to imput values
+      MatrixAccessor<double> C_BM(*xpC);
+      
+      // memcpy elements to the big.matrix object
+      for (int i = 0; i < MM; i++){
+        std::memcpy(C_BM[i], Cm.colptr(i), NN*sizeof(double));
+      }
+      return C;
+    }else{
+      // return normal R matrix
+      return Rcpp::wrap(Cm);
+    } 
+  #endif
 }
 
 
@@ -226,29 +248,65 @@ dgemm_wrapper2 (SEXP A, SEXP B, SEXP C, SEXP A_isBM, SEXP B_isBM, SEXP C_isBM)
 SEXP
 daxpy_wrapper (SEXP N, SEXP A, SEXP X, SEXP Y, SEXP X_isBM)
 {
-  SEXP ans, Tr;
-  double *pY;
-  double *pA = DOUBLE_DATA(A);
-  double *pX = make_double_ptr (X, X_isBM);
-  INT incx = 1;
-  INT incy = 1;
-  INT NN = (INT) * (DOUBLE_DATA (N));
-  PROTECT(ans = Y);
-  PROTECT(Tr = Rf_allocVector(LGLSXP, 1));
-  LOGICAL(Tr)[0] = 1;
-  pY = make_double_ptr (Y, Tr);
-/* An example of an alternate C-blas interface (e.g., ACML) */
-#ifdef CBLAS
-  daxpy_ (NN, pA, pX, incx, pY, incy);
-#elif REFBLAS
-/* Standard Fortran interface without underscoring */
-  int8_daxpy (&NN, pA, pX, &incx, pY, &incy);
-#else
-/* Standard Fortran interface from R's blas */
-  daxpy_ (&NN, pA, pX, &incx, pY, &incy);
-#endif
-  Rf_unprotect(2);
-  return ans;
+  
+  #ifdef NON_R_BLAS
+    SEXP ans, Tr;
+    double *pY;
+    double *pA = DOUBLE_DATA(A);
+    double *pX = make_double_ptr (X, X_isBM);
+    INT incx = 1;
+    INT incy = 1;
+    INT NN = (INT) * (DOUBLE_DATA (N));
+    PROTECT(ans = Y);
+    PROTECT(Tr = Rf_allocVector(LGLSXP, 1));
+    LOGICAL(Tr)[0] = 1;
+    pY = make_double_ptr (Y, Tr);
+    /* An example of an alternate C-blas interface (e.g., ACML) */
+    #ifdef CBLAS
+      daxpy_ (NN, pA, pX, incx, pY, incy);
+    #elif REFBLAS
+    /* Standard Fortran interface without underscoring */
+      int8_daxpy (&NN, pA, pX, &incx, pY, &incy);
+    #else
+      #error "BLAS format not supported"
+    #endif
+    
+    Rf_unprotect(2);
+    return ans;
+    
+  #else 
+    /* RcppArmadillo 'BLAS' implementation */
+    
+    // convert to arma matrices
+    const arma::mat Xm = ConvertToArma(X, X_isBM);
+    arma::mat Ym = ConvertToArma(Y, X_isBM);
+    
+    arma::uword MM = Xm.n_cols;
+    arma::uword NN = Xm.n_rows;
+
+    double ALPHA = Rcpp::as<double>(A);
+    
+    // RcppArmadillo Matrix Addition or Subtraction
+    Ym = ALPHA * Xm + Ym;
+    
+    /* Ideally would like to avoid the following loop
+     * would need to consider passing another check for
+     * a separated big.matrix.  The following is required
+     * for a separated big.matrix so it works in both scenarios
+     */
+     
+    // get BigMatrix external pointer
+    Rcpp::XPtr<BigMatrix> xpY = BigMatrixXPtr(Y);
+    // create MatrixAccessor object to imput values
+    MatrixAccessor<double> Y_BM(*xpY);
+    
+    // memcpy elements to the big.matrix object
+    for (arma::uword i = 0; i < MM; i++){
+      std::memcpy(Y_BM[i], Ym.colptr(i), NN*sizeof(double));
+    }
+    return Y;
+   
+  #endif
 }
   
 // [[Rcpp::export]]
@@ -285,446 +343,395 @@ SEXP dpotrf_wrapper(SEXP UPLO, SEXP N, SEXP A, SEXP LDA, SEXP INFO, SEXP A_isBM)
 
 // [[Rcpp::export]]
 SEXP
-dadd_wrapper(SEXP N, SEXP ALPHA, SEXP Y, SEXP Y_isBM, SEXP SIGN, SEXP ALPHA_LHS) {
-  SEXP ans;
-  double *pY;
-  INT NN = (INT) * (DOUBLE_DATA(N));
-  double alpha = *(DOUBLE_DATA(ALPHA));
-  int alpha_lhs = *(INTEGER_DATA(ALPHA_LHS));
-  double sign = *(DOUBLE_DATA(SIGN));
-  pY = make_double_ptr(Y, Y_isBM);
-  PROTECT(ans = Y);
-  if (alpha_lhs) 
-  {
-    for (INT i=0; i < NN; ++i)
-    {
-      pY[i] = alpha + sign * pY[i];
+dadd_wrapper(SEXP ALPHA, SEXP Y, SEXP Y_isBM, SEXP SIGN) {
+    // convert to arma matrices
+    arma::mat Ym = ConvertToArma(Y, Y_isBM);
+    
+    arma::uword MM = Ym.n_cols;
+    arma::uword NN = Ym.n_rows;
+
+    double SCALAR = Rcpp::as<double>(ALPHA);
+    double sign = Rcpp::as<double>(SIGN);
+    
+    // RcppArmadillo Matrix Addition or Subtraction
+    Ym = sign * SCALAR + Ym;
+    
+    /* Ideally would like to avoid the following loop
+     * would need to consider passing another check for
+     * a separated big.matrix.  The following is required
+     * for a separated big.matrix so it works in both scenarios
+     */
+     
+    // get BigMatrix external pointer
+    Rcpp::XPtr<BigMatrix> xpY = BigMatrixXPtr(Y);
+    // create MatrixAccessor object to imput values
+    MatrixAccessor<double> Y_BM(*xpY);
+    
+    // memcpy elements to the big.matrix object
+    for (arma::uword i = 0; i < MM; i++){
+      std::memcpy(Y_BM[i], Ym.colptr(i), NN*sizeof(double));
     }
-  }
-  else
-  {
-    for (INT i=0; i < NN; ++i)
-    {
-      pY[i] += sign*alpha;
-    }
-  }
-  Rf_unprotect(1);
-  return ans;
+    return Y;
 }
-
-
 
 
 /* Compute the QR decomposition of a big.matrix
- * Y must be a big.matrix, X can be an R vector or big.matrix.
- * The contents of Y are *replaced* by this routine and a reference
- * to Y is returned.
+ * Y, Q, & R must be of class big.matrix
+ * 
+ * Also, the output is currently different between armadillo and
+ * direct LAPACK.  Armadillo output is consistent with other
+ * functions such as numpy.linalg.qr or scipy.linalg.qr in python.
+ * As such, I currently am leaning towards this output as opposed
+ * to the 'compact' form returned by the base R 'qr' function.
  */
+//// [[Rcpp::export]]
+//SEXP
+//dgeqrf_wrapper (SEXP M, SEXP N, SEXP Y, SEXP LDA, SEXP TAU, SEXP WORK,
+//                SEXP LWORK, SEXP INFO, SEXP A_isBM, SEXP TAU_isBM, 
+//                SEXP WORK_isBM)
+
 // [[Rcpp::export]]
 SEXP
-dgeqrf_wrapper (SEXP M, SEXP N, SEXP Y, SEXP LDA, SEXP TAU, SEXP WORK,
-                SEXP LWORK, SEXP INFO, SEXP A_isBM, SEXP TAU_isBM, 
-                SEXP WORK_isBM)
+dgeqrf_wrapper (SEXP Y, SEXP Q, SEXP R)
 {
-  SEXP ans, Tr;
-  double *pY;
-  double *pTAU = make_double_ptr (TAU, TAU_isBM);
-  double *pWORK = make_double_ptr (WORK, WORK_isBM);
-  INT NN = (INT) * (DOUBLE_DATA (N));
-  INT MM = (INT) * (DOUBLE_DATA (M));
-  INT LDAi = (INT) * (DOUBLE_DATA (LDA));
-  INT LWORKi = (INT) * (DOUBLE_DATA (LWORK));
-  INT INFOi = (INT) * (DOUBLE_DATA (INFO));
-  
-  PROTECT(ans = Y);
-  PROTECT(Tr = Rf_allocVector(LGLSXP, 1));
-  LOGICAL(Tr)[0] = 1;
-  pY = make_double_ptr (Y, Tr);
-  
-/* C-blas and REFBLAS untested */
-/* An example of an alternate C-blas interface (e.g., ACML) */
-#ifdef CBLAS
-  dgeqrf (MM, NN, pY, LDAi, pTAU, pWORK, LWORKi, INFOi);
-#elif REFBLAS
-/* Standard Fortran interface without underscoring */
-  int8_dgeqrf (&MM, &NN, pY, &LDAi, pTAU, pWORK, &LWORKi, &INFOi);
-#else
-/* Connect to LAPACK Fortran interface
- * The function is declared at start of this file
- */
-  dgeqrf_ (&MM, &NN, pY, &LDAi, pTAU, pWORK, &LWORKi, &INFOi);
-#endif
-  Rf_unprotect(2);
-  return ans;
+//  #ifdef NON_R_BLAS
+//    SEXP ans, Tr;
+//    double *pY;
+//    double *pTAU = make_double_ptr (TAU, TAU_isBM);
+//    double *pWORK = make_double_ptr (WORK, WORK_isBM);
+//    INT NN = (INT) * (DOUBLE_DATA (N));
+//    INT MM = (INT) * (DOUBLE_DATA (M));
+//    INT LDAi = (INT) * (DOUBLE_DATA (LDA));
+//    INT LWORKi = (INT) * (DOUBLE_DATA (LWORK));
+//    INT INFOi = (INT) * (DOUBLE_DATA (INFO));
+//    
+//    PROTECT(ans = Y);
+//    PROTECT(Tr = Rf_allocVector(LGLSXP, 1));
+//    LOGICAL(Tr)[0] = 1;
+//    pY = make_double_ptr (Y, Tr);
+//    
+//    /* C-blas and REFBLAS untested */
+//    /* An example of an alternate C-blas interface (e.g., ACML) */
+//    #ifdef CBLAS
+//      dgeqrf (MM, NN, pY, LDAi, pTAU, pWORK, LWORKi, INFOi);
+//    #elif REFBLAS
+//    /* Standard Fortran interface without underscoring */
+//      int8_dgeqrf (&MM, &NN, pY, &LDAi, pTAU, pWORK, &LWORKi, &INFOi);
+//    #else
+//      #error "BLAS format not supported"
+//    #endif
+//    
+//    Rf_unprotect(2);
+//    return ans;
+//  #else
+    const arma::mat Ym = ConvertBMtoArma(Y);
+    arma::mat Qm = ConvertBMtoArma(Q);
+    arma::mat Rm = ConvertBMtoArma(R);
+    
+    // QR decomposition
+    /* arma::qr returns a bool set to false if QR fails
+     * need to have an exception catch.
+     * NOTE - This is untested!!! Need a matrix that will fail
+     */
+    if(!arma::qr(Qm,Rm,Ym)){
+      Rcpp::stop("QR decomposition failed");
+    };
+    
+    arma::uword QMM = Qm.n_cols;
+    arma::uword QNN = Qm.n_rows;
+    arma::uword RMM = Rm.n_cols;
+    arma::uword RNN = Rm.n_rows;
+    
+     
+    // get BigMatrix external pointer
+    Rcpp::XPtr<BigMatrix> xpQ = BigMatrixXPtr(Q);
+    Rcpp::XPtr<BigMatrix> xpR = BigMatrixXPtr(R);
+    // create MatrixAccessor object to imput values
+    MatrixAccessor<double> Q_BM(*xpQ);
+    MatrixAccessor<double> R_BM(*xpR);
+    
+    // memcpy elements to the big.matrix object
+    for (arma::uword i = 0; i < QMM; i++){
+      std::memcpy(Q_BM[i], Qm.colptr(i), QNN*sizeof(double));
+    }
+    
+    // memcpy elements to the big.matrix object
+    for (arma::uword i = 0; i < RMM; i++){
+      std::memcpy(R_BM[i], Rm.colptr(i), RNN*sizeof(double));
+    }
+    
+    // return list of Q and R
+    return Rcpp::List::create(Named("Q") = Q, Named("R") = R);
+//  #endif
 }
 
 
-// Unsure if there is a 'proper' BLAS function for the following functions
+/* No specific BLAS functions for the following so all
+ * are strictly armadillo.
+ */
 
 // element-wise matrix multiplcation
 // [[Rcpp::export]]
 SEXP
-dgeemm_wrapper (SEXP N, SEXP X, SEXP Y, SEXP Z, SEXP X_isBM, SEXP Y_isBM){
-  SEXP ans, Tr;
-  double *pZ;
-  double *pY = make_double_ptr (Y, Y_isBM);
-  double *pX = make_double_ptr (X, X_isBM);
-  unsigned int NN = (unsigned int) * (DOUBLE_DATA(N));
-//  pY = make_double_ptr(Y, Y_isBM);
+dgeemm_wrapper (SEXP X, SEXP Y, SEXP X_isBM){
   
-  PROTECT(ans = Z);
-  PROTECT(Tr = Rf_allocVector(LGLSXP, 1));
-  LOGICAL(Tr)[0] = 1;
-  pZ = make_double_ptr (Z, Tr);
-  
-  unsigned int i = 0;
-  unsigned int blocklimit;
-  
-  /* The limit may not be divisible by BLOCKSIZE, 
-   * go as near as we can first, then tidy up.
-   */ 
-  blocklimit = ( NN / BLOCKSIZE ) * BLOCKSIZE;
-  
-  while( i < blocklimit )
-  {
-    pZ[i] = pX[i]*pY[i];
-    pZ[i+1] = pX[i+1]*pY[i+1];
-    pZ[i+2] = pX[i+2]*pY[i+2];
-    pZ[i+3] = pX[i+3]*pY[i+3];
-    pZ[i+4] = pX[i+4]*pY[i+4];
-    pZ[i+5] = pX[i+5]*pY[i+5];
-    pZ[i+6] = pX[i+6]*pY[i+6];
-    pZ[i+7] = pX[i+7]*pY[i+7];
+    // convert to arma matrices
+    const arma::mat Xm = ConvertToArma(X, X_isBM);
+    // Y will always be a big.matrix
+    arma::mat Ym = ConvertBMtoArma(Y);
+      
+    arma::uword MM = Xm.n_cols;
+    arma::uword NN = Xm.n_rows;
     
-    // update counter
-    i+=8;
-  }
-  
-  // finish remaining elements
-  if( i < NN ) 
-    { 
-        /* Jump into the case at the place that will allow
-         * us to finish off the appropriate number of items. 
-         */ 
-
-        switch( NN - i ) 
-        { 
-            case 7 : pZ[i] = pX[i]*pY[i]; i++; 
-            case 6 : pZ[i] = pX[i]*pY[i]; i++; 
-            case 5 : pZ[i] = pX[i]*pY[i]; i++; 
-            case 4 : pZ[i] = pX[i]*pY[i]; i++; 
-            case 3 : pZ[i] = pX[i]*pY[i]; i++; 
-            case 2 : pZ[i] = pX[i]*pY[i]; i++; 
-            case 1 : pZ[i] = pX[i]*pY[i]; 
-        }
-    } 
-    Rf_unprotect(2);
-    return ans;
+    // RcppArmadillo Element-wise Matrix Multiplication
+    Ym = Xm % Ym;
+    
+    // get BigMatrix external pointer
+    Rcpp::XPtr<BigMatrix> xpY = BigMatrixXPtr(Y);
+    // create MatrixAccessor object to imput values
+    MatrixAccessor<double> Y_BM(*xpY);
+    
+    // memcpy elements to the big.matrix object
+    for (arma::uword i = 0; i < MM; i++){
+      std::memcpy(Y_BM[i], Ym.colptr(i), NN*sizeof(double));
+    }
+    return Y;
 }
 
 
 // element-wise matrix division
 // [[Rcpp::export]]
 SEXP
-dgeemd_wrapper (SEXP N, SEXP X, SEXP Y, SEXP Z, SEXP X_isBM, SEXP Y_isBM){
-  SEXP ans, Tr;
-  double *pZ;
-  double *pY = make_double_ptr (Y, Y_isBM);
-  double *pX = make_double_ptr (X, X_isBM);
-  unsigned int NN = (unsigned int) * (DOUBLE_DATA(N));
-//  pY = make_double_ptr(Y, Y_isBM);
-  
-  PROTECT(ans = Z);
-  PROTECT(Tr = Rf_allocVector(LGLSXP, 1));
-  LOGICAL(Tr)[0] = 1;
-  pZ = make_double_ptr (Z, Tr);
-  
-  unsigned int i = 0;
-  //unsigned int limit = 33;
-  unsigned int blocklimit;
-  
-  /* The limit may not be divisible by BLOCKSIZE, 
-   * go as near as we can first, then tidy up.
-   */ 
-  blocklimit = ( NN / BLOCKSIZE ) * BLOCKSIZE;
-  
-  while( i < blocklimit )
-  {
-    pZ[i] = pX[i] / pY[i];
-    pZ[i+1] = pX[i+1] / pY[i+1];
-    pZ[i+2] = pX[i+2] / pY[i+2];
-    pZ[i+3] = pX[i+3] / pY[i+3];
-    pZ[i+4] = pX[i+4] / pY[i+4];
-    pZ[i+5] = pX[i+5] / pY[i+5];
-    pZ[i+6] = pX[i+6] / pY[i+6];
-    pZ[i+7] = pX[i+7] / pY[i+7];
+dgeemd_wrapper (SEXP X, SEXP Y, SEXP X_isBM){
+    // convert to arma matrices
+    const arma::mat Xm = ConvertToArma(X, X_isBM);
+    // Y will always be a big.matrix
+    arma::mat Ym = ConvertBMtoArma(Y);
+      
+    arma::uword MM = Xm.n_cols;
+    arma::uword NN = Xm.n_rows;
     
-    // update counter
-    i+=8;
-  }
-  
-  // finish remaining elements
-  if( i < NN ) 
-    { 
-        /* Jump into the case at the place that will allow
-         * us to finish off the appropriate number of items. 
-         */ 
-
-        switch( NN - i ) 
-        { 
-            case 7 : pZ[i] = pX[i] / pY[i]; i++; 
-            case 6 : pZ[i] = pX[i] / pY[i]; i++; 
-            case 5 : pZ[i] = pX[i] / pY[i]; i++; 
-            case 4 : pZ[i] = pX[i] / pY[i]; i++; 
-            case 3 : pZ[i] = pX[i] / pY[i]; i++; 
-            case 2 : pZ[i] = pX[i] / pY[i]; i++; 
-            case 1 : pZ[i] = pX[i] / pY[i]; 
-        }
-    } 
-    Rf_unprotect(2);
-    return ans;
+    // RcppArmadillo Element-wise Matrix Division
+    Ym = Xm / Ym;
+    
+    // get BigMatrix external pointer
+    Rcpp::XPtr<BigMatrix> xpY = BigMatrixXPtr(Y);
+    // create MatrixAccessor object to imput values
+    MatrixAccessor<double> Y_BM(*xpY);
+    
+    // memcpy elements to the big.matrix object
+    for (arma::uword i = 0; i < MM; i++){
+      std::memcpy(Y_BM[i], Ym.colptr(i), NN*sizeof(double));
+    }
+    return Y;
 }
 
 
 // Scalar-matrix division
 // [[Rcpp::export]]
 SEXP
-dgesmd_wrapper (SEXP N, SEXP A, SEXP Y, SEXP Y_isBM, SEXP ALPHA_LHS) {
-  SEXP ans;
-  double *pY;
-  INT NN = (INT) * (DOUBLE_DATA(N));
-  INT ALPHA = (INT) * (DOUBLE_DATA(A));
-  int alpha_lhs = *(INTEGER_DATA(ALPHA_LHS));
-  pY = make_double_ptr(Y, Y_isBM);
-  PROTECT(ans = Y);
- 
-  unsigned int i = 0;
-  unsigned int blocklimit;
-  blocklimit = ( NN / BLOCKSIZE ) * BLOCKSIZE;
+dgesmd_wrapper (SEXP A, SEXP Y, SEXP Y_isBM, int ALPHA_LHS) {
+
+    INT ALPHA = (INT) * (DOUBLE_DATA(A));
   
-  if(alpha_lhs == 0){
-    while( i < blocklimit )
-    {
-      pY[i] = pY[i]/ALPHA;
-      pY[i+1] = pY[i+1]/ALPHA;
-      pY[i+2] = pY[i+2]/ALPHA;
-      pY[i+3] = pY[i+3]/ALPHA;
-      pY[i+4] = pY[i+4]/ALPHA;
-      pY[i+5] = pY[i+5]/ALPHA;
-      pY[i+6] = pY[i+6]/ALPHA;
-      pY[i+7] = pY[i+7]/ALPHA;
+    // Y will always be a big.matrix
+    arma::mat Ym = ConvertBMtoArma(Y);
       
-      // update counter
-      i+=8;
+    arma::uword MM = Ym.n_cols;
+    arma::uword NN = Ym.n_rows;
+    
+    // RcppArmadillo Element-wise Scalar Division
+    if(ALPHA_LHS){
+        Ym = ALPHA / Ym;
+    }else{      
+        Ym = Ym / ALPHA;
     }
     
-    // finish remaining elements
-    if( i < NN ) 
-      { 
-          switch( NN - i ) 
-          { 
-              case 7 : pY[i] = pY[i] / ALPHA; i++; 
-              case 6 : pY[i] = pY[i] / ALPHA; i++; 
-              case 5 : pY[i] = pY[i] / ALPHA; i++; 
-              case 4 : pY[i] = pY[i] / ALPHA; i++; 
-              case 3 : pY[i] = pY[i] / ALPHA; i++; 
-              case 2 : pY[i] = pY[i] / ALPHA; i++; 
-              case 1 : pY[i] = pY[i] / ALPHA; 
-          }
-      } 
-  }
-  else
-  {
-    while( i < blocklimit )
-    {
-      pY[i] = ALPHA / pY[i];
-      pY[i+1] = ALPHA / pY[i+1];
-      pY[i+2] = ALPHA / pY[i+2];
-      pY[i+3] = ALPHA / pY[i+3];
-      pY[i+4] = ALPHA / pY[i+4];
-      pY[i+5] = ALPHA / pY[i+5];
-      pY[i+6] = ALPHA / pY[i+6];
-      pY[i+7] = ALPHA / pY[i+7];
-      
-      // update counter
-      i+=8;
-    }
+    // get BigMatrix external pointer
+    Rcpp::XPtr<BigMatrix> xpY = BigMatrixXPtr(Y);
+    // create MatrixAccessor object to imput values
+    MatrixAccessor<double> Y_BM(*xpY);
     
-    // finish remaining elements
-    if( i < NN ) 
-      { 
-          switch( NN - i ) 
-          { 
-              case 7 : pY[i] = ALPHA / pY[i]; i++; 
-              case 6 : pY[i] = ALPHA / pY[i]; i++; 
-              case 5 : pY[i] = ALPHA / pY[i]; i++; 
-              case 4 : pY[i] = ALPHA / pY[i]; i++; 
-              case 3 : pY[i] = ALPHA / pY[i]; i++; 
-              case 2 : pY[i] = ALPHA / pY[i]; i++; 
-              case 1 : pY[i] = ALPHA / pY[i]; 
-          }
-      }
-  }
-  
-  Rf_unprotect(1);
-  return ans;
+    // memcpy elements to the big.matrix object
+    for (arma::uword i = 0; i < MM; i++){
+      std::memcpy(Y_BM[i], Ym.colptr(i), NN*sizeof(double));
+    }
+    return Y;
 }
 
 
 // Power
 // [[Rcpp::export]]
 SEXP
-dgepow_wrapper(SEXP N, SEXP EXP, SEXP Y, SEXP Y_isBM) {
-  SEXP ans;
-  double *pY;
-  INT NN = (INT) * (DOUBLE_DATA(N));
-  double PP = (double) * (DOUBLE_DATA (EXP));
-  pY = make_double_ptr(Y, Y_isBM);
-  PROTECT(ans = Y);
- 
-  for (INT i=0; i < NN; ++i)
-  {
-    pY[i] = pow(pY[i], PP);
-  }
-  
-  Rf_unprotect(1);
-  return ans;
+dgepow_wrapper(SEXP EXP, SEXP Y) {
+    // Y will always be a big.matrix
+    arma::mat Ym = ConvertBMtoArma(Y);
+      
+    arma::uword MM = Ym.n_cols;
+    arma::uword NN = Ym.n_rows;
+    
+    // RcppArmadillo Element-wise Scalar Division
+    Ym = pow(Ym, Rcpp::as<double>(EXP));
+    
+    // get BigMatrix external pointer
+    Rcpp::XPtr<BigMatrix> xpY = BigMatrixXPtr(Y);
+    // create MatrixAccessor object to imput values
+    MatrixAccessor<double> Y_BM(*xpY);
+    
+    // memcpy elements to the big.matrix object
+    for (arma::uword i = 0; i < MM; i++){
+      std::memcpy(Y_BM[i], Ym.colptr(i), NN*sizeof(double));
+    }
+    return Y;
 }
-
-//// [[Rcpp::export]]
-//SEXP
-//dgepow_arma(SEXP pBigMat, SEXP EXP) {
-//  
-//  Rcpp::XPtr<BigMatrix> xpMat(pBigMat);
-//  // convert to arma matrix - false reuses memory
-//  arma::mat BM_arma((double *)xpMat->matrix(), 
-//                            xpMat->nrow(), 
-//                            xpMat->ncol(), 
-//                            false);
-//                  
-//  arma::mat ret_arma = pow(BM_arma, Rcpp::as<double>(EXP));
-//  
-////    SEXP address = R_MakeExternalPtr( dynamic_cast<BigMatrix*>(pMat),
-////      R_NilValue, R_NilValue);
-////    R_RegisterCFinalizerEx(address, (R_CFinalizer_t) CDestroyBigMatrix, 
-////      (Rboolean) TRUE);
-////    return address;
-//  Rcpp::XPtr<BigMatrix> pMatRet(Rcpp::wrap(ret_arma));
-//  return pMatRet;
-//}
 
 
 // common logarithm
 // [[Rcpp::export]]
 SEXP
-dgeclog_wrapper(SEXP N, SEXP Y, SEXP Y_isBM) {
-  SEXP ans;
-  double *pY;
-  INT NN = (INT) * (DOUBLE_DATA(N));
-  pY = make_double_ptr(Y, Y_isBM);
-  PROTECT(ans = Y);
- 
-  for (INT i=0; i < NN; ++i)
-  {
-    pY[i] = log10(pY[i]);
-  }
-  
-  Rf_unprotect(1);
-  return ans;
+dgeclog_wrapper(SEXP Y) {
+    // Y will always be a big.matrix
+    arma::mat Ym = ConvertBMtoArma(Y);
+      
+    arma::uword MM = Ym.n_cols;
+    arma::uword NN = Ym.n_rows;
+    
+    // RcppArmadillo Element-wise Scalar Division
+    Ym = log10(Ym);
+    
+    // get BigMatrix external pointer
+    Rcpp::XPtr<BigMatrix> xpY = BigMatrixXPtr(Y);
+    // create MatrixAccessor object to imput values
+    MatrixAccessor<double> Y_BM(*xpY);
+    
+    // memcpy elements to the big.matrix object
+    for (arma::uword i = 0; i < MM; i++){
+      std::memcpy(Y_BM[i], Ym.colptr(i), NN*sizeof(double));
+    }
+    return Y;
 }
 
 // base logarithm
 // [[Rcpp::export]]
 SEXP
-dgelog_wrapper(SEXP N, SEXP BASE, SEXP Y, SEXP Y_isBM) {
-  SEXP ans;
-  double *pY;
-  INT NN = (INT) * (DOUBLE_DATA(N));
-  double BB = (double) * (DOUBLE_DATA (BASE));
-  pY = make_double_ptr(Y, Y_isBM);
-  PROTECT(ans = Y);
- 
-  for (INT i=0; i < NN; ++i)
-  {
-    pY[i] = log10(pY[i])/log10(BB);
-  }
-  
-  Rf_unprotect(1);
-  return ans;
+dgelog_wrapper(SEXP BASE, SEXP Y) {
+    // Y will always be a big.matrix
+    arma::mat Ym = ConvertBMtoArma(Y);
+      
+    arma::uword MM = Ym.n_cols;
+    arma::uword NN = Ym.n_rows;
+    
+    // RcppArmadillo Element-wise Scalar Division
+    Ym = log10(Ym)/log10(Rcpp::as<double>(BASE));
+    
+    // get BigMatrix external pointer
+    Rcpp::XPtr<BigMatrix> xpY = BigMatrixXPtr(Y);
+    // create MatrixAccessor object to imput values
+    MatrixAccessor<double> Y_BM(*xpY);
+    
+    // memcpy elements to the big.matrix object
+    for (arma::uword i = 0; i < MM; i++){
+      std::memcpy(Y_BM[i], Ym.colptr(i), NN*sizeof(double));
+    }
+    return Y;
 }
 
 // Exponential function
 // [[Rcpp::export]]
 SEXP
-dgeexp_wrapper(SEXP N, SEXP Y, SEXP Y_isBM) {
-  SEXP ans;
-  double *pY;
-  INT NN = (INT) * (DOUBLE_DATA(N));
-  pY = make_double_ptr(Y, Y_isBM);
-  PROTECT(ans = Y);
- 
-  for (INT i=0; i < NN; ++i)
-  {
-    pY[i] = exp(pY[i]);
-  }
-  
-  Rf_unprotect(1);
-  return ans;
+dgeexp_wrapper(SEXP Y) {
+    // Y will always be a big.matrix
+    arma::mat Ym = ConvertBMtoArma(Y);
+      
+    arma::uword MM = Ym.n_cols;
+    arma::uword NN = Ym.n_rows;
+    
+    // RcppArmadillo Element-wise Scalar Division
+    Ym = exp(Ym);
+    
+    // get BigMatrix external pointer
+    Rcpp::XPtr<BigMatrix> xpY = BigMatrixXPtr(Y);
+    // create MatrixAccessor object to imput values
+    MatrixAccessor<double> Y_BM(*xpY);
+    
+    // memcpy elements to the big.matrix object
+    for (arma::uword i = 0; i < MM; i++){
+      std::memcpy(Y_BM[i], Ym.colptr(i), NN*sizeof(double));
+    }
+    return Y;
 }
 
 // hyperbolic tangent
 // [[Rcpp::export]]
 SEXP
-dgetanh_wrapper(SEXP N, SEXP Y, SEXP Y_isBM) {
-  SEXP ans;
-  double *pY;
-  INT NN = (INT) * (DOUBLE_DATA(N));
-  pY = make_double_ptr(Y, Y_isBM);
-  PROTECT(ans = Y);
- 
-  for (INT i=0; i < NN; ++i)
-  {
-    pY[i] = tanh(pY[i]);
-  }
-  
-  Rf_unprotect(1);
-  return ans;
+dgetanh_wrapper(SEXP Y) {
+    // Y will always be a big.matrix
+    arma::mat Ym = ConvertBMtoArma(Y);
+      
+    arma::uword MM = Ym.n_cols;
+    arma::uword NN = Ym.n_rows;
+    
+    // RcppArmadillo Element-wise Scalar Division
+    Ym = tanh(Ym);
+    
+    // get BigMatrix external pointer
+    Rcpp::XPtr<BigMatrix> xpY = BigMatrixXPtr(Y);
+    // create MatrixAccessor object to imput values
+    MatrixAccessor<double> Y_BM(*xpY);
+    
+    // memcpy elements to the big.matrix object
+    for (arma::uword i = 0; i < MM; i++){
+      std::memcpy(Y_BM[i], Ym.colptr(i), NN*sizeof(double));
+    }
+    return Y;
 }
 
 // hyperbolic cosine
 // [[Rcpp::export]]
 SEXP
-dgecosh_wrapper(SEXP N, SEXP Y, SEXP Y_isBM) {
-  SEXP ans;
-  double *pY;
-  INT NN = (INT) * (DOUBLE_DATA(N));
-  pY = make_double_ptr(Y, Y_isBM);
-  PROTECT(ans = Y);
- 
-  for (INT i=0; i < NN; ++i)
-  {
-    pY[i] = cosh(pY[i]);
-  }
-  
-  Rf_unprotect(1);
-  return ans;
+dgecosh_wrapper(SEXP Y) {
+    // Y will always be a big.matrix
+    arma::mat Ym = ConvertBMtoArma(Y);
+      
+    arma::uword MM = Ym.n_cols;
+    arma::uword NN = Ym.n_rows;
+    
+    // RcppArmadillo Element-wise Scalar Division
+    Ym = cosh(Ym);
+    
+    // get BigMatrix external pointer
+    Rcpp::XPtr<BigMatrix> xpY = BigMatrixXPtr(Y);
+    // create MatrixAccessor object to imput values
+    MatrixAccessor<double> Y_BM(*xpY);
+    
+    // memcpy elements to the big.matrix object
+    for (arma::uword i = 0; i < MM; i++){
+      std::memcpy(Y_BM[i], Ym.colptr(i), NN*sizeof(double));
+    }
+    return Y;
 }
 
 // hyperbolic sine
 // [[Rcpp::export]]
 SEXP
-dgesinh_wrapper(SEXP N, SEXP Y, SEXP Y_isBM) {
-  SEXP ans;
-  double *pY;
-  INT NN = (INT) * (DOUBLE_DATA(N));
-  pY = make_double_ptr(Y, Y_isBM);
-  PROTECT(ans = Y);
- 
-  for (INT i=0; i < NN; ++i)
-  {
-    pY[i] = sinh(pY[i]);
-  }
-  
-  Rf_unprotect(1);
-  return ans;
+dgesinh_wrapper(SEXP Y) {
+    // Y will always be a big.matrix
+    arma::mat Ym = ConvertBMtoArma(Y);
+      
+    arma::uword MM = Ym.n_cols;
+    arma::uword NN = Ym.n_rows;
+    
+    // RcppArmadillo Element-wise Scalar Division
+    Ym = sinh(Ym);
+    
+    // get BigMatrix external pointer
+    Rcpp::XPtr<BigMatrix> xpY = BigMatrixXPtr(Y);
+    // create MatrixAccessor object to imput values
+    MatrixAccessor<double> Y_BM(*xpY);
+    
+    // memcpy elements to the big.matrix object
+    for (arma::uword i = 0; i < MM; i++){
+      std::memcpy(Y_BM[i], Ym.colptr(i), NN*sizeof(double));
+    }
+    return Y;
 }
