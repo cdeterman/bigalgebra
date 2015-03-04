@@ -3,10 +3,7 @@
 
 #' @useDynLib bigalgebra
 #' @importFrom Rcpp evalCpp
-#' @export
-hello <- function() {
-    invisible(.Call('bigalgebra_hello', PACKAGE = 'bigalgebra'))
-}
+NULL
 
 dgemm_wrapper <- function(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, LDC, A_isBM, B_isBM, C_isBM, C_offset) {
     .Call('bigalgebra_dgemm_wrapper', PACKAGE = 'bigalgebra', TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, LDC, A_isBM, B_isBM, C_isBM, C_offset)
@@ -40,6 +37,23 @@ dgesmd_wrapper <- function(A, Y, Y_isBM, ALPHA_LHS) {
     .Call('bigalgebra_dgesmd_wrapper', PACKAGE = 'bigalgebra', A, Y, Y_isBM, ALPHA_LHS)
 }
 
+#' @name t_wrapper
+#' @title Big Matrix Transposition
+#' @param X big.matrix object
+#' @param Y big.matrix object (to be filled)
+#' @param LOW_MEM boolean option to choose slower, low memory option
+t_wrapper <- function(X, Y) {
+    .Call('bigalgebra_t_wrapper', PACKAGE = 'bigalgebra', X, Y)
+}
+
+#' @name t_inplace_wrapper
+#' @title Big Matrix In Place Transposition
+#' @param X big.matrix object
+#' @param LOW_MEM boolean option to choose slower, low memory option
+t_inplace_wrapper <- function(X, LOW_MEM) {
+    .Call('bigalgebra_t_inplace_wrapper', PACKAGE = 'bigalgebra', X, LOW_MEM)
+}
+
 dgepow_wrapper <- function(EXP, Y) {
     .Call('bigalgebra_dgepow_wrapper', PACKAGE = 'bigalgebra', EXP, Y)
 }
@@ -66,5 +80,13 @@ dgecosh_wrapper <- function(Y) {
 
 dgesinh_wrapper <- function(Y) {
     .Call('bigalgebra_dgesinh_wrapper', PACKAGE = 'bigalgebra', Y)
+}
+
+eigen_wrapper <- function(X, EIG_VECS, only_values) {
+    .Call('bigalgebra_eigen_wrapper', PACKAGE = 'bigalgebra', X, EIG_VECS, only_values)
+}
+
+all_equal_cpp <- function(X_, Y_, tol_) {
+    .Call('bigalgebra_all_equal_cpp', PACKAGE = 'bigalgebra', X_, Y_, tol_)
 }
 

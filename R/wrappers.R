@@ -195,38 +195,6 @@ dgesmd = function(Y, ALPHA, ALPHA_LHS=0)
   return(ans)
 }
 
-### Old QR code
-# # Matrix QR Decomposition
-# dgeqrf = function(A)
-# {
-#   A.is.bm = check_matrix(A,classes=c('big.matrix','matrix','vector','numeric'))
-#   
-#   # default to a column big matrix output
-#   M = length(A)
-#   L = M
-#   N = 1L
-#   D = dim(A)
-#   if(!is.null(D) && length(D)==2)
-#   {
-#     M = D[1]
-#     N = D[2]
-#   }
-#   TAU = as.matrix(rep(0.0, min(M,N)))
-#   LWORK = max(1, N)
-#   WORK = as.matrix(rep(0.0, max(1, LWORK)))
-#   INFO=0
-#   Y = deepcopy(A, backingfile="")
-#   
-#   A.is.bm = check_matrix(A)
-#   TAU.is.bm = check_matrix(TAU)
-#   WORK.is.bm = check_matrix(WORK)
-# 
-#   ans = dgeqrf_wrapper(as.double(M), as.double(N), Y, LDA=as.double(M), 
-#               as.double(TAU), as.double(WORK), as.double(LWORK), as.double(INFO),
-#               as.logical(A.is.bm), as.logical(TAU.is.bm), as.logical(WORK.is.bm))
-#   return(ans)
-# }
-
 
 # Matrix QR Decomposition
 # Need to create a matrix that cannot be orthonormalized
@@ -276,6 +244,31 @@ dpotrf=function(UPLO='U', N=NULL, A, LDA=NULL)
                  as.double(INFO), A.is.bm)
   return(INFO)
 }
+
+dpotrf=function(UPLO='U', N=NULL, A, LDA=NULL)
+{
+  if (is.null(N))
+  {
+    N = ncol(A)
+  }
+  if (is.null(LDA))
+  {
+    LDA = nrow(A)
+  }
+  
+  A.is.bm = check_matrix(A)
+  assert_is_positive_definite(A)
+  
+  
+  R <- anon_matrix(N,N,val=0.0)
+  R[] <- A[]
+  
+  INFO = 0
+  dpotrf_wrapper(as.character(UPLO), as.double(N), R, as.double(LDA),
+                 as.double(INFO), A.is.bm)
+  return(R)
+}
+
 
 # transposition
 transposeBM = function(X){
