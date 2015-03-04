@@ -277,6 +277,60 @@ dpotrf=function(UPLO='U', N=NULL, A, LDA=NULL)
   return(INFO)
 }
 
+# transposition
+transposeBM = function(X){
+  
+  assert_is_bigmatrix(X)
+  
+  # Dimensions
+  D = dim(X)
+  M = D[1]
+  N = D[2]
+  
+  # create matrix for new values
+  Y <- anon_matrix(N,M,val=0.0)
+
+  ans <- t_wrapper(X,Y)
+  
+  return(ans)
+}
+
+# possible in-place function
+# this will require a 'reshape' for the given
+# big.matrix dimensions
+# IPT_BM = function(X, low_mem=FALSE, inplace=FALSE){
+#   
+#   assert_is_bigmatrix(X)
+#   assert_is_a_bool(low_mem)
+#   assert_is_a_bool(inplace)
+#   
+#   transpose matrix
+#     if(inplace){
+#       ans <- t_inplace_wrapper(X,low_mem)
+#     }else{
+#       ans <- t_inplace_wrapper(Y,low_mem)
+#     }
+#   
+#   return(ans)
+# }
+
+
+# Eigen
+eigenBM <- function(X, only.values=TRUE){
+  check_matrix(X, "big.matrix", "double")
+  assert_is_a_bool(only.values)
+  
+  M = ncol(X)
+  
+  if(!only.values){
+      EIG_VECS <- anon_matrix(M,M,val=0.0)  
+  }else{
+      EIG_VECS <- NULL
+  }
+  
+  ret <- eigen_wrapper(X, EIG_VECS, only.values)
+  return(ret)
+}
 
 # Power of matrix elements
 # Y := POW(Y, B)
