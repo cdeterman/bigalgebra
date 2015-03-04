@@ -118,10 +118,29 @@ test_that("QR matrix decomposition successful", {
 })
 
 test_that("Choleski matrix decomposition successful", {
-  BM_CHOL <- chol(bm)
-  expect_true(all(sapply(BM_CHOL, function(x) class(x) == "big.matrix")))
-  expect_equivalent(BM_QR$Q[] %*% BM_QR$R[], bm[])
+  m_chol <- matrix(c(2,-1,0,-1,2,-1,0,-1,2), nrow=3, byrow=TRUE)
+  bm_chol <- as.big.matrix(m_chol)
+  M_CHOL <- chol(m_chol)
+  BM_CHOL <- chol(bm_chol)
+  expect_true(class(BM_CHOL) == "big.matrix")
+  expect_equivalent(M_CHOL, BM_CHOL[])
 })
 
-m <- matrix(c(5,1,1,3),2,2)
-chol(m)
+test_that("eigen method works", {
+  # create symmetric matrix
+  s <- matrix(seq(25), 5)
+  s[lower.tri(s)] = t(s)[lower.tri(s)]
+  symBM <- as.big.matrix(s, type="double")
+  
+  mat_eig <- eigen(s, only.values=TRUE)$values
+  BM_eig <- eigen(symBM, only.values=TRUE)$values
+  mat_eig_full <- eigen(s, only.values=FALSE)
+  BM_eig_full <- eigen(symBM, only.values=FALSE)
+  
+  expect_equivalent(mat_eig, BM_eig)
+  expect_equivalent(mat_eig_full$values, BM_eig_full$values)
+  expect_true(class(BM_eig_full$vectors) == "big.matrix")
+  # eigen vectors signs are irrelevant so ignore with abs
+  expect_equivalent(abs(mat_eig_full$vectors), abs(BM_eig_full$vectors[]))
+})
+
