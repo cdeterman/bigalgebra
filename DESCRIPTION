@@ -20,7 +20,8 @@ Description: This package provides arithmetic functions for R matrix and big.mat
 License: LGPL-3 | Apache License 2.0
 Copyright: (C) 2014 Michael J. Kane, Bryan Lewis, and John W. Emerson
 URL: http://www.bigmemory.org
+Biarch: yes
 LazyLoad: yes
-Packaged: 2012-12-26 22:17:06 UTC; blewis
+Packaged: 2015-03-04 13:07:06 UTC; cdeterman
 NeedsComiplation: yes
 Suggests: testthat
