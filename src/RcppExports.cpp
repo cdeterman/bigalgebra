@@ -319,17 +319,52 @@ BEGIN_RCPP
     return __sexp_result;
 END_RCPP
 }
+// cpp_isDiagonal
+SEXP cpp_isDiagonal(SEXP Y, SEXP Y_isBM);
+RcppExport SEXP bigalgebra_cpp_isDiagonal(SEXP YSEXP, SEXP Y_isBMSEXP) {
+BEGIN_RCPP
+    SEXP __sexp_result;
+    {
+        Rcpp::RNGScope __rngScope;
+        Rcpp::traits::input_parameter< SEXP >::type Y(YSEXP );
+        Rcpp::traits::input_parameter< SEXP >::type Y_isBM(Y_isBMSEXP );
+        SEXP __result = cpp_isDiagonal(Y, Y_isBM);
+        PROTECT(__sexp_result = Rcpp::wrap(__result));
+    }
+    UNPROTECT(1);
+    return __sexp_result;
+END_RCPP
+}
+// cpp_isTriangular
+LogicalVector cpp_isTriangular(SEXP Y, SEXP Y_isBM, LogicalVector upper_);
+RcppExport SEXP bigalgebra_cpp_isTriangular(SEXP YSEXP, SEXP Y_isBMSEXP, SEXP upper_SEXP) {
+BEGIN_RCPP
+    SEXP __sexp_result;
+    {
+        Rcpp::RNGScope __rngScope;
+        Rcpp::traits::input_parameter< SEXP >::type Y(YSEXP );
+        Rcpp::traits::input_parameter< SEXP >::type Y_isBM(Y_isBMSEXP );
+        Rcpp::traits::input_parameter< LogicalVector >::type upper_(upper_SEXP );
+        LogicalVector __result = cpp_isTriangular(Y, Y_isBM, upper_);
+        PROTECT(__sexp_result = Rcpp::wrap(__result));
+    }
+    UNPROTECT(1);
+    return __sexp_result;
+END_RCPP
+}
 // all_equal_cpp
-SEXP all_equal_cpp(SEXP X_, SEXP Y_, SEXP tol_);
-RcppExport SEXP bigalgebra_all_equal_cpp(SEXP X_SEXP, SEXP Y_SEXP, SEXP tol_SEXP) {
+SEXP all_equal_cpp(SEXP X_, SEXP Y_, SEXP X_isBM, SEXP Y_isBM, SEXP tol_);
+RcppExport SEXP bigalgebra_all_equal_cpp(SEXP X_SEXP, SEXP Y_SEXP, SEXP X_isBMSEXP, SEXP Y_isBMSEXP, SEXP tol_SEXP) {
 BEGIN_RCPP
     SEXP __sexp_result;
     {
         Rcpp::RNGScope __rngScope;
         Rcpp::traits::input_parameter< SEXP >::type X_(X_SEXP );
         Rcpp::traits::input_parameter< SEXP >::type Y_(Y_SEXP );
+        Rcpp::traits::input_parameter< SEXP >::type X_isBM(X_isBMSEXP );
+        Rcpp::traits::input_parameter< SEXP >::type Y_isBM(Y_isBMSEXP );
         Rcpp::traits::input_parameter< SEXP >::type tol_(tol_SEXP );
-        SEXP __result = all_equal_cpp(X_, Y_, tol_);
+        SEXP __result = all_equal_cpp(X_, Y_, X_isBM, Y_isBM, tol_);
         PROTECT(__sexp_result = Rcpp::wrap(__result));
     }
     UNPROTECT(1);

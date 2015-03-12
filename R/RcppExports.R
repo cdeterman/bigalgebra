@@ -86,7 +86,15 @@ eigen_wrapper <- function(X, EIG_VECS, only_values) {
     .Call('bigalgebra_eigen_wrapper', PACKAGE = 'bigalgebra', X, EIG_VECS, only_values)
 }
 
-all_equal_cpp <- function(X_, Y_, tol_) {
-    .Call('bigalgebra_all_equal_cpp', PACKAGE = 'bigalgebra', X_, Y_, tol_)
+cpp_isDiagonal <- function(Y, Y_isBM) {
+    .Call('bigalgebra_cpp_isDiagonal', PACKAGE = 'bigalgebra', Y, Y_isBM)
+}
+
+cpp_isTriangular <- function(Y, Y_isBM, upper_) {
+    .Call('bigalgebra_cpp_isTriangular', PACKAGE = 'bigalgebra', Y, Y_isBM, upper_)
+}
+
+all_equal_cpp <- function(X_, Y_, X_isBM, Y_isBM, tol_) {
+    .Call('bigalgebra_all_equal_cpp', PACKAGE = 'bigalgebra', X_, Y_, X_isBM, Y_isBM, tol_)
 }
 

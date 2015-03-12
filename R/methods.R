@@ -2,6 +2,10 @@
 #' @import methods
 #' @importFrom bigmemory typeof
 
+# class unions when differentiating isn't important
+setClassUnion("matrixORbigmatrix", c("matrix","big.matrix"))
+
+
 #' @export
 setMethod("%*%",signature(x="big.matrix", y="big.matrix"),
   function(x,y) 
@@ -171,14 +175,27 @@ t.big.matrix <-
     transposeBM(x)
   }
 
+#' @title all.equal
+#' @description all.equal method for comparing elements between big.matrix and
+#' matrix objects.
+#' @param target A \code{matrix} or \code{big.matrix} object
+#' @param current A \code{matrix} or \code{big.matrix} object
+#' @param tolerance tolerance for rounding error
+#' @return Either \code{TRUE} or \code{FALSE} indicating if all elements are
+#' equivlanet.
 #' @export
-all.equal.big.matrix <-
-  function(x, y, tol=.Machine$double.eps^0.5){
-    if(!all(dim(x) == dim(y))){
-      return(FALSE)
-    }
-    all_equal_cpp(x,y,tol)
-  }
+setMethod("all.equal", c(target = "matrixORbigmatrix", current="matrixORbigmatrix"),
+          function(target,current,tolerance=.Machine$double.eps^0.5){
+            if(!all(dim(target) == dim(current))){
+              return(FALSE)
+            }
+            X_isBM <- check_matrix(target)
+            Y_isBM <- check_matrix(current)
+            
+            all_equal_cpp(target, current, X_isBM, Y_isBM, tolerance)
+          }
+)
+
 
 #' @export
 setMethod("isSquare", c(object="big.matrix"),
@@ -199,6 +216,50 @@ setMethod("isSquare", c(object="matrix"),
             return(nrow(object) == ncol(object))
           }
 )
+
+#' @export
+setMethod("isDiagonal", c(object="big.matrix"),
+          function(object){
+              if(!isSquare(object)){
+                return(FALSE)
+              }
+              
+              Y.is.bm = check_matrix(object)
+              cpp_isDiagonal(object, Y.is.bm)
+          })
+
+#' @export
+setMethod("isDiagonal", c(object="matrix"),
+          function(object){
+            if(!isSquare(object)){
+              return(FALSE)
+            }
+            
+            Y.is.bm = check_matrix(object)
+            cpp_isDiagonal(object, Y.is.bm)
+          })
+
+#' @export
+setMethod("isTriangular", c(object="big.matrix"),
+          function(object, upper=NA){
+            if(!isSquare(object)){
+              return(FALSE)
+            }
+            
+            Y.is.bm = check_matrix(object)
+            cpp_isTriangular(object, Y.is.bm, upper)
+          })
+
+#' @export
+setMethod("isTriangular", c(object="matrix"),
+          function(object, upper=NA){
+            if(!isSquare(object)){
+              return(FALSE)
+            }
+            
+            Y.is.bm = check_matrix(object)
+            cpp_isTriangular(object, Y.is.bm, upper)
+          })
 
 #' @export
 setMethod("isSymmetric", signature(object="big.matrix"),
@@ -273,6 +334,192 @@ setMethod("isPositiveDefinite", signature(object="matrix"),
             }
             
             if (any(eigenvalues <= 0)) {
+              return(FALSE)
+            }
+            return(TRUE)
+          }
+)
+
+#' @export
+setMethod("isPositiveSemiDefinite", signature(object="big.matrix"),
+          function(object, tol = 100 * .Machine$double.eps){
+            
+            if (!is.big.matrix(object)) {
+              stop("argument x is not a big.matrix")
+            }
+            
+            check_matrix(object, classes="big.matrix", types=c("integer", "double"))
+            
+            if (!isSquare(object)) 
+              stop("argument object is not a square numeric matrix")
+            if (!isSymmetric(object, tol)) 
+              stop("argument x is not a symmetric matrix")
+            
+            eigenvalues <- eigen(object, only.values = TRUE)$values
+            
+            n <- nrow(object)
+            for (i in 1:n) {
+              if (abs(eigenvalues[i]) < tol) {
+                eigenvalues[i] <- 0
+              }
+            }
+            
+            if (any(eigenvalues < 0)) {
+              return(FALSE)
+            }
+            return(TRUE)
+          }
+)
+
+#' @export
+setMethod("isPositiveSemiDefinite", signature(object="matrix"),
+          function(object, tol = 100 * .Machine$double.eps){
+            
+            if (!is.matrix(object)) {
+              stop("argument x is not a matrix")
+            }
+            
+            check_matrix(object, classes="matrix", types=c("integer", "double"))
+            
+            if (!isSquare(object)) 
+              stop("argument object is not a square numeric matrix")
+            if (!isSymmetric(object, tol)) 
+              stop("argument x is not a symmetric matrix")
+            
+            eigenvalues <- eigen(object, only.values = TRUE)$values
+            
+            n <- nrow(object)
+            for (i in 1:n) {
+              if (abs(eigenvalues[i]) < tol) {
+                eigenvalues[i] <- 0
+              }
+            }
+            
+            if (any(eigenvalues < 0)) {
+              return(FALSE)
+            }
+            return(TRUE)
+          }
+)
+
+#' @export
+setMethod("isNegativeDefinite", signature(object="big.matrix"),
+          function(object, tol = 100 * .Machine$double.eps){
+            
+            if (!is.big.matrix(object)) {
+              stop("argument x is not a big.matrix")
+            }
+            
+            check_matrix(object, classes="big.matrix", types=c("integer", "double"))
+            
+            if (!isSquare(object)) 
+              stop("argument object is not a square numeric matrix")
+            if (!isSymmetric(object, tol)) 
+              stop("argument x is not a symmetric matrix")
+            
+            eigenvalues <- eigen(object, only.values = TRUE)$values
+            
+            n <- nrow(object)
+            for (i in 1:n) {
+              if (abs(eigenvalues[i]) < tol) {
+                eigenvalues[i] <- 0
+              }
+            }
+            
+            if (any(eigenvalues >= 0)) {
+              return(FALSE)
+            }
+            return(TRUE)
+          }
+)
+
+#' @export
+setMethod("isNegativeDefinite", signature(object="matrix"),
+          function(object, tol = 100 * .Machine$double.eps){
+            
+            if (!is.matrix(object)) {
+              stop("argument x is not a matrix")
+            }
+            
+            check_matrix(object, classes="matrix", types=c("integer", "double"))
+            
+            if (!isSquare(object)) 
+              stop("argument object is not a square numeric matrix")
+            if (!isSymmetric(object, tol)) 
+              stop("argument x is not a symmetric matrix")
+            
+            eigenvalues <- eigen(object, only.values = TRUE)$values
+            
+            n <- nrow(object)
+            for (i in 1:n) {
+              if (abs(eigenvalues[i]) < tol) {
+                eigenvalues[i] <- 0
+              }
+            }
+            
+            if (any(eigenvalues >= 0)) {
+              return(FALSE)
+            }
+            return(TRUE)
+          }
+)
+
+#' @export
+setMethod("isNegativeSemiDefinite", signature(object="big.matrix"),
+          function(object, tol = 100 * .Machine$double.eps){
+            
+            if (!is.big.matrix(object)) {
+              stop("argument x is not a big.matrix")
+            }
+            
+            check_matrix(object, classes="big.matrix", types=c("integer", "double"))
+            
+            if (!isSquare(object)) 
+              stop("argument object is not a square numeric matrix")
+            if (!isSymmetric(object, tol)) 
+              stop("argument x is not a symmetric matrix")
+            
+            eigenvalues <- eigen(object, only.values = TRUE)$values
+            
+            n <- nrow(object)
+            for (i in 1:n) {
+              if (abs(eigenvalues[i]) < tol) {
+                eigenvalues[i] <- 0
+              }
+            }
+            
+            if (any(eigenvalues > 0)) {
+              return(FALSE)
+            }
+            return(TRUE)
+          }
+)
+
+#' @export
+setMethod("isNegativeSemiDefinite", signature(object="matrix"),
+          function(object, tol = 100 * .Machine$double.eps){
+            
+            if (!is.matrix(object)) {
+              stop("argument x is not a matrix")
+            }
+            
+            check_matrix(object, classes="matrix", types=c("integer", "double"))
+            
+            if (!isSquare(object)) 
+              stop("argument object is not a square numeric matrix")
+            if (!isSymmetric(object, tol)) 
+              stop("argument x is not a symmetric matrix")
+            
+            eigenvalues <- eigen(object, only.values = TRUE)$values
+            
+            n <- nrow(object)
+            for (i in 1:n) {
+              if (abs(eigenvalues[i]) < tol) {
+                eigenvalues[i] <- 0
+              }
+            }
+            
+            if (any(eigenvalues > 0)) {
               return(FALSE)
             }
             return(TRUE)

@@ -7,6 +7,26 @@ setGeneric("isSquare", function(object){
   standardGeneric("isSquare")
 })
 
+setGeneric("isDiagonal", function(object){
+  standardGeneric("isDiagonal")
+})
+
+setGeneric("isTriangular", function(object, ...){
+  standardGeneric("isTriangular")
+})
+
 setGeneric("isPositiveDefinite", function(object, ...){
   standardGeneric("isPositiveDefinite")
+})
+
+setGeneric("isPositiveSemiDefinite", function(object, ...){
+  standardGeneric("isPositiveSemiDefinite")
+})
+
+setGeneric("isNegativeDefinite", function(object, ...){
+  standardGeneric("isNegativeDefinite")
+})
+
+setGeneric("isNegativeSemiDefinite", function(object, ...){
+  standardGeneric("isNegativeSemiDefinite")
 })
