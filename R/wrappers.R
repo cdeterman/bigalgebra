@@ -228,22 +228,22 @@ dgeqrf = function(A)
 # Cholesky factorization
 # return 0 if successful, <0 if -i-th argument is invalid, > 0 if leading minor
 # is not positive definite
-dpotrf=function(UPLO='U', N=NULL, A, LDA=NULL)
-{
-  if (is.null(N))
-  {
-    N = ncol(A)
-  }
-  if (is.null(LDA))
-  {
-    LDA = nrow(A)
-  }
-  A.is.bm = check_matrix(A)
-  INFO = 0
-  dpotrf_wrapper(as.character(UPLO), as.double(N), A, as.double(LDA),
-                 as.double(INFO), A.is.bm)
-  return(INFO)
-}
+# dpotrf=function(UPLO='U', N=NULL, A, LDA=NULL)
+# {
+#   if (is.null(N))
+#   {
+#     N = ncol(A)
+#   }
+#   if (is.null(LDA))
+#   {
+#     LDA = nrow(A)
+#   }
+#   A.is.bm = check_matrix(A)
+#   INFO = 0
+#   dpotrf_wrapper(as.character(UPLO), as.double(N), A, as.double(LDA),
+#                  as.double(INFO), A.is.bm)
+#   return(INFO)
+# }
 
 dpotrf=function(UPLO='U', N=NULL, A, LDA=NULL)
 {
