@@ -10,8 +10,6 @@
 #include "refblas64longlong.h"
 #define INT long long
 #else
-#include <R_ext/BLAS.h>
-#include <R_ext/Lapack.h>
 #define INT int
 #endif
 
@@ -31,18 +29,20 @@
 
 #include "bigmatrix_arma.h"
 
+using namespace Rcpp;
+
 // [[Rcpp::export]]
 SEXP
-all_equal_cpp (SEXP X_, SEXP Y_, SEXP tol_)
+all_equal_cpp (SEXP X_, SEXP Y_, SEXP X_isBM, SEXP Y_isBM, SEXP tol_)
 {
-  arma::mat X = ConvertBMtoArma(X_);
-  arma::mat Y = ConvertBMtoArma(Y_);
-  double tol = Rcpp::as<double>(tol_);
+  arma::mat X = ConvertToArma(X_, X_isBM);
+  arma::mat Y = ConvertToArma(Y_, Y_isBM);
+  double tol = as<double>(tol_);
   double check = arma::sum(arma::sum(X-Y));
   
   if(check > tol){
-      return Rcpp::wrap(false);
+      return wrap(false);
   }else{
-      return Rcpp::wrap(true);
+      return wrap(true);
   }
 }
