@@ -1,5 +1,5 @@
 library("bigalgebra")
-context("linear algebra tests")
+context("Linear Algebra Tests")
 
 mat <- matrix(1:9, 
               ncol = 3)
