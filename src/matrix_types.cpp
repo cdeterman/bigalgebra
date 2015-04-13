@@ -33,10 +33,10 @@ using namespace Rcpp;
 
 // [[Rcpp::export]]
 SEXP
-cpp_isDiagonal(SEXP Y, SEXP Y_isBM){
+cpp_isDiagonal(SEXP Y, bool Y_isBM){
   
-  const arma::mat Ym = ConvertToArma(Y, Y_isBM);
-  
+  const arma::mat Ym( Y_isBM ? ConvertBMtoArma(Y) : as<arma::mat>(Y) );
+
   // lower matrix
   const arma::vec Yl = vectorise(arma::trimatl(Ym));
   // upper matrix
@@ -50,11 +50,11 @@ cpp_isDiagonal(SEXP Y, SEXP Y_isBM){
 
 // [[Rcpp::export]]
 LogicalVector
-cpp_isTriangular(SEXP Y, SEXP Y_isBM, LogicalVector upper_){
+cpp_isTriangular(SEXP Y, bool Y_isBM, LogicalVector upper_){
   
   //bool upper = as<bool>(upper_);
   LogicalVector out = LogicalVector::create(true);
-  const arma::mat Ym = ConvertToArma(Y, Y_isBM);
+  const arma::mat Ym( Y_isBM ? ConvertBMtoArma(Y) : as<arma::mat>(Y) );
   const arma::uword nc = Ym.n_cols;
   
   arma::mat Z(nc,nc,arma::fill::zeros);

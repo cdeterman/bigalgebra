@@ -33,10 +33,11 @@ using namespace Rcpp;
 
 // [[Rcpp::export]]
 SEXP
-all_equal_cpp (SEXP X_, SEXP Y_, SEXP X_isBM, SEXP Y_isBM, SEXP tol_)
+all_equal_cpp (SEXP X_, SEXP Y_, bool X_isBM, bool Y_isBM, SEXP tol_)
 {
-  arma::mat X = ConvertToArma(X_, X_isBM);
-  arma::mat Y = ConvertToArma(Y_, Y_isBM);
+  const arma::mat X( X_isBM ? ConvertBMtoArma(X_) : as<arma::mat>(X_) );
+  const arma::mat Y( Y_isBM ? ConvertBMtoArma(Y_) : as<arma::mat>(Y_) );
+
   double tol = as<double>(tol_);
   double check = arma::sum(arma::sum(X-Y));
   

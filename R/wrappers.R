@@ -25,6 +25,7 @@ dgemm = function(TRANSA='N', TRANSB='N', M=NULL, N=NULL, K=NULL,
   
   A.is.bm = check_matrix(A)
   B.is.bm = check_matrix(B)
+  
 # The matrices look OK.  Now, if they haven't been specified, let's
 # specify some reasonable dimension information.
   if ( is.null(M) )
@@ -43,7 +44,7 @@ dgemm = function(TRANSA='N', TRANSB='N', M=NULL, N=NULL, K=NULL,
   if ( is.null(LDB) ) LDB = ifelse (is_transposed(TRANSB), N, K) 
   if ( is.null(LDC) ) LDC = M
 
-# Default to big matrix output
+  # Default to big matrix output
   if(missing(C)) C = anon_matrix(M, N)
   C.is.bm = "big.matrix" %in% class(C)
 
@@ -154,8 +155,7 @@ dgeemd = function(X, Y)
     mixed=FALSE
   }
   
-  X.is.bm = check_matrix(X,classes=c('big.matrix','matrix','vector','numeric'))
-  Y.is.bm = check_matrix(Y, classes=c('big.matrix', 'matrix', 'vector', 'numeric'))
+  X.is.bm = is.big.matrix(X)
   
   # Check conformity of matrices
   if(length(Y)!=length(X)) stop("Lengths of X and Y must match")
