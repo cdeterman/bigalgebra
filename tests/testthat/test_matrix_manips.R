@@ -19,6 +19,7 @@ dBM <- as.big.matrix(dm, type="double")
 
 # triangular matrices
 utm <- matrix(seq(25), 5); utm[!upper.tri(utm)] <- 0
+diag(utm) <- 1
 utmBM <- as.big.matrix(utm, type="double")
 ltm <- matrix(seq(25), 5); ltm[!lower.tri(ltm)] <- 0
 ltmBM <- as.big.matrix(ltm, type="double")
@@ -46,6 +47,7 @@ test_that("isDiagonal works", {
 })
 
 test_that("isTriangular works", {
+#   print(dm)
   expect_true(isTriangular(dm))
   expect_true(isTriangular(dBM))
   expect_true(isTriangular(utm, upper=TRUE), 

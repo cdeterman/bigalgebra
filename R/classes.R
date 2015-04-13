@@ -4,6 +4,7 @@
 # will be useful for providing more efficient analysis of special
 # matrix types.
 
+# currently, only 'double' matrices are supported
 
 setClass("symmetricBigMatrix", contains="big.matrix",
          validity = function(object) isSymmetric(object))
