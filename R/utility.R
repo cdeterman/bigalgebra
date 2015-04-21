@@ -33,6 +33,7 @@ check_matrix = function(A, classes=c('big.matrix', 'matrix'),
 # n: number of columns
 # type: optional type, defaults to double
 # val:  optional fill-in value of type 'type.'
+#' @importFrom bigmemory filebacked.big.matrix
 anon_matrix = function(m, n, type, val=NULL)
 {
   if(missing(type)) type = "double"
