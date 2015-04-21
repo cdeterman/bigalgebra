@@ -12,31 +12,8 @@ Rcpp::XPtr<BigMatrix> BigMatrixXPtr(SEXP A){
     Rcpp::XPtr<BigMatrix> xpA(A_address);
     return xpA;
  }
-      
-/* Convert big.matrix or matrix to arma object
- * NOTE - this shares the memory so anything
- * done to the arma object is automatically changed
- * in the big.matrix object.
- */
-inline
-arma::mat ConvertToArma(SEXP A, SEXP isBM)
-{
-  if(Rf_asLogical(isBM) == (Rboolean) TRUE)
-      { 
-        Rcpp::XPtr<BigMatrix> xpA = BigMatrixXPtr(A);
-        
-        arma::mat Am = arma::mat( (double*) xpA->matrix(),
-                    xpA->nrow(),
-                    xpA->ncol(),
-                    false);
-        return Am;
-      }else{
-        arma::mat Am = Rcpp::as<arma::mat>(A);
-        return Am;
-      }
-}
-
-/* Directly convert big.matrix to arma object
+ 
+ /* Directly convert big.matrix to arma object
  * NOTE - this shares the memory so anything
  * done to the arma object is automatically changed
  * in the big.matrix object.
@@ -52,5 +29,6 @@ arma::mat ConvertBMtoArma(SEXP A)
               false);
   return Am;
 }
+
 
 #endif

@@ -34,13 +34,6 @@
 
 using namespace Rcpp;
 
-// Declare LAPACK functions
-extern "C"
-{
-  //void dgeqrf_ (int *M, int *N, double *Y, int *LDA, double *TAU,
-  //                  double *WORK, int *LWORK, int *INFO); 
-}
-
 #ifdef __cplusplus
 extern "C"
 {
@@ -116,7 +109,7 @@ make_double_ptr (SEXP matrix, SEXP isBigMatrix)
 SEXP
 dgemm_wrapper (SEXP TRANSA, SEXP TRANSB, SEXP M, SEXP N, SEXP K,
                SEXP ALPHA, SEXP A, SEXP LDA, SEXP B, SEXP LDB, SEXP BETA,
-               SEXP C, SEXP LDC, SEXP A_isBM, SEXP B_isBM, SEXP C_isBM,
+               SEXP C, SEXP LDC, bool A_isBM, bool B_isBM, bool C_isBM,
                SEXP C_offset)
 {
   
@@ -166,21 +159,16 @@ dgemm_wrapper (SEXP TRANSA, SEXP TRANSB, SEXP M, SEXP N, SEXP K,
     return ans;
     
   #else
-    /* RcppArmadillo BLAS interface */
-    const arma::mat Am = ConvertToArma(A, A_isBM);
-    const arma::mat Bm = ConvertToArma(B, B_isBM);
-    arma::mat Cm = ConvertToArma(C, C_isBM);
+
+    const arma::mat Am( A_isBM ? ConvertBMtoArma(A) : as<arma::mat>(A) );
+    const arma::mat Bm( B_isBM ? ConvertBMtoArma(B) : as<arma::mat>(B) );
+    arma::mat Cm( C_isBM ? ConvertBMtoArma(C) : as<arma::mat>(C) );
     
+    /* RcppArmadillo BLAS interface */
     // RcppArmadillo Matrix Multiplication
     Cm = Am * Bm;
-    
-    /* Ideally would like to avoid the following loop
-     * would need to consider passing another check for
-     * a separated big.matrix.  The following is required
-     * for a separated big.matrix so it works in both scenarios
-     */
-    
-    if(Rf_asLogical(C_isBM) == (Rboolean) TRUE)
+        
+    if(C_isBM)
     {
       return C;
     }else{
@@ -198,7 +186,7 @@ dgemm_wrapper (SEXP TRANSA, SEXP TRANSB, SEXP M, SEXP N, SEXP K,
  */
  // [[Rcpp::export]]
 SEXP
-daxpy_wrapper (SEXP N, SEXP A, SEXP X, SEXP Y, SEXP X_isBM)
+daxpy_wrapper (SEXP N, SEXP A, SEXP X, SEXP Y, bool X_isBM)
 {
   
   #ifdef NON_R_BLAS
@@ -230,10 +218,9 @@ daxpy_wrapper (SEXP N, SEXP A, SEXP X, SEXP Y, SEXP X_isBM)
     /* RcppArmadillo 'BLAS' implementation */
     
     // convert to arma matrices
-    const arma::mat Xm = ConvertToArma(X, X_isBM);
-    arma::mat Ym = ConvertToArma(Y, X_isBM);
-
-
+    const arma::mat Xm( X_isBM ? ConvertBMtoArma(X) : as<arma::mat>(X) );
+    arma::mat Ym( X_isBM ? ConvertBMtoArma(Y) : as<arma::mat>(Y) );
+    
     double ALPHA = Rcpp::as<double>(A);
     
     // RcppArmadillo Matrix Addition or Subtraction
@@ -245,7 +232,7 @@ daxpy_wrapper (SEXP N, SEXP A, SEXP X, SEXP Y, SEXP X_isBM)
 }
   
 // [[Rcpp::export]]
-SEXP dpotrf_wrapper(SEXP UPLO, SEXP N, SEXP A, SEXP LDA, SEXP INFO, SEXP A_isBM)
+SEXP dpotrf_wrapper(SEXP UPLO, SEXP N, SEXP A, SEXP LDA, SEXP INFO, bool A_isBM)
 {
   #ifdef NON_R_BLAS
     SEXP ans;
@@ -267,7 +254,10 @@ SEXP dpotrf_wrapper(SEXP UPLO, SEXP N, SEXP A, SEXP LDA, SEXP INFO, SEXP A_isBM)
       Rf_unprotect(1);
       return ans;
   #else
-    arma::mat Am = ConvertToArma(A, A_isBM);
+    
+    // convert to armadillo matrix
+    arma::mat Am( A_isBM ? ConvertBMtoArma(A) : as<arma::mat>(A) );
+
     Am = arma::chol(Am);
     return A;
   #endif
@@ -287,9 +277,10 @@ SEXP dpotrf_wrapper(SEXP UPLO, SEXP N, SEXP A, SEXP LDA, SEXP INFO, SEXP A_isBM)
 
 // [[Rcpp::export]]
 SEXP
-dadd_wrapper(SEXP ALPHA, SEXP Y, SEXP Y_isBM, SEXP SIGN) {
+dadd_wrapper(SEXP ALPHA, SEXP Y, bool Y_isBM, SEXP SIGN) {
     // convert to arma matrices
-    arma::mat Ym = ConvertToArma(Y, Y_isBM);
+    arma::mat Ym( Y_isBM ? ConvertBMtoArma(Y) : as<arma::mat>(Y) );
+
 
     double SCALAR = Rcpp::as<double>(ALPHA);
     int sign = Rcpp::as<int>(SIGN);
@@ -340,10 +331,11 @@ dgeqrf_wrapper (SEXP Y, SEXP Q, SEXP R)
 // element-wise matrix multiplcation
 // [[Rcpp::export]]
 SEXP
-dgeemm_wrapper (SEXP X, SEXP Y, SEXP X_isBM){
+dgeemm_wrapper (SEXP X, SEXP Y, bool X_isBM){
   
     // convert to arma matrices
-    const arma::mat Xm = ConvertToArma(X, X_isBM);
+    const arma::mat Xm( X_isBM ? ConvertBMtoArma(X) : as<arma::mat>(X) );
+
     // Y will always be a big.matrix
     arma::mat Ym = ConvertBMtoArma(Y);
     
@@ -357,10 +349,12 @@ dgeemm_wrapper (SEXP X, SEXP Y, SEXP X_isBM){
 // element-wise matrix division
 // [[Rcpp::export]]
 SEXP
-dgeemd_wrapper (SEXP X, SEXP Y, SEXP X_isBM){
+dgeemd_wrapper (SEXP X, SEXP Y, bool X_isBM){
     // convert to arma matrices
-    const arma::mat Xm = ConvertToArma(X, X_isBM);
-    // Y will always be a big.matrix
+    const arma::mat Xm( X_isBM ? ConvertBMtoArma(X) : as<arma::mat>(X) );
+
+    // Y will always be a big.matrix b/c created by anon_matrix
+//    arma::mat Ym( Y_isBM ? ConvertBMtoArma(Y) : as<arma::mat>(Y) );
     arma::mat Ym = ConvertBMtoArma(Y);
     
     // RcppArmadillo Element-wise Matrix Division
@@ -373,7 +367,7 @@ dgeemd_wrapper (SEXP X, SEXP Y, SEXP X_isBM){
 // Scalar-matrix division
 // [[Rcpp::export]]
 SEXP
-dgesmd_wrapper (SEXP A, SEXP Y, SEXP Y_isBM, int ALPHA_LHS) {
+dgesmd_wrapper (SEXP A, SEXP Y, bool Y_isBM, int ALPHA_LHS) {
 
     INT ALPHA = (INT) * (DOUBLE_DATA(A));
   

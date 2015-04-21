@@ -7,7 +7,7 @@
 using namespace Rcpp;
 
 // dgemm_wrapper
-SEXP dgemm_wrapper(SEXP TRANSA, SEXP TRANSB, SEXP M, SEXP N, SEXP K, SEXP ALPHA, SEXP A, SEXP LDA, SEXP B, SEXP LDB, SEXP BETA, SEXP C, SEXP LDC, SEXP A_isBM, SEXP B_isBM, SEXP C_isBM, SEXP C_offset);
+SEXP dgemm_wrapper(SEXP TRANSA, SEXP TRANSB, SEXP M, SEXP N, SEXP K, SEXP ALPHA, SEXP A, SEXP LDA, SEXP B, SEXP LDB, SEXP BETA, SEXP C, SEXP LDC, bool A_isBM, bool B_isBM, bool C_isBM, SEXP C_offset);
 RcppExport SEXP bigalgebra_dgemm_wrapper(SEXP TRANSASEXP, SEXP TRANSBSEXP, SEXP MSEXP, SEXP NSEXP, SEXP KSEXP, SEXP ALPHASEXP, SEXP ASEXP, SEXP LDASEXP, SEXP BSEXP, SEXP LDBSEXP, SEXP BETASEXP, SEXP CSEXP, SEXP LDCSEXP, SEXP A_isBMSEXP, SEXP B_isBMSEXP, SEXP C_isBMSEXP, SEXP C_offsetSEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
@@ -25,16 +25,16 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type BETA(BETASEXP);
     Rcpp::traits::input_parameter< SEXP >::type C(CSEXP);
     Rcpp::traits::input_parameter< SEXP >::type LDC(LDCSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type A_isBM(A_isBMSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type B_isBM(B_isBMSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type C_isBM(C_isBMSEXP);
+    Rcpp::traits::input_parameter< bool >::type A_isBM(A_isBMSEXP);
+    Rcpp::traits::input_parameter< bool >::type B_isBM(B_isBMSEXP);
+    Rcpp::traits::input_parameter< bool >::type C_isBM(C_isBMSEXP);
     Rcpp::traits::input_parameter< SEXP >::type C_offset(C_offsetSEXP);
     __result = Rcpp::wrap(dgemm_wrapper(TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, LDC, A_isBM, B_isBM, C_isBM, C_offset));
     return __result;
 END_RCPP
 }
 // daxpy_wrapper
-SEXP daxpy_wrapper(SEXP N, SEXP A, SEXP X, SEXP Y, SEXP X_isBM);
+SEXP daxpy_wrapper(SEXP N, SEXP A, SEXP X, SEXP Y, bool X_isBM);
 RcppExport SEXP bigalgebra_daxpy_wrapper(SEXP NSEXP, SEXP ASEXP, SEXP XSEXP, SEXP YSEXP, SEXP X_isBMSEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
@@ -43,13 +43,13 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type A(ASEXP);
     Rcpp::traits::input_parameter< SEXP >::type X(XSEXP);
     Rcpp::traits::input_parameter< SEXP >::type Y(YSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type X_isBM(X_isBMSEXP);
+    Rcpp::traits::input_parameter< bool >::type X_isBM(X_isBMSEXP);
     __result = Rcpp::wrap(daxpy_wrapper(N, A, X, Y, X_isBM));
     return __result;
 END_RCPP
 }
 // dpotrf_wrapper
-SEXP dpotrf_wrapper(SEXP UPLO, SEXP N, SEXP A, SEXP LDA, SEXP INFO, SEXP A_isBM);
+SEXP dpotrf_wrapper(SEXP UPLO, SEXP N, SEXP A, SEXP LDA, SEXP INFO, bool A_isBM);
 RcppExport SEXP bigalgebra_dpotrf_wrapper(SEXP UPLOSEXP, SEXP NSEXP, SEXP ASEXP, SEXP LDASEXP, SEXP INFOSEXP, SEXP A_isBMSEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
@@ -59,20 +59,20 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type A(ASEXP);
     Rcpp::traits::input_parameter< SEXP >::type LDA(LDASEXP);
     Rcpp::traits::input_parameter< SEXP >::type INFO(INFOSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type A_isBM(A_isBMSEXP);
+    Rcpp::traits::input_parameter< bool >::type A_isBM(A_isBMSEXP);
     __result = Rcpp::wrap(dpotrf_wrapper(UPLO, N, A, LDA, INFO, A_isBM));
     return __result;
 END_RCPP
 }
 // dadd_wrapper
-SEXP dadd_wrapper(SEXP ALPHA, SEXP Y, SEXP Y_isBM, SEXP SIGN);
+SEXP dadd_wrapper(SEXP ALPHA, SEXP Y, bool Y_isBM, SEXP SIGN);
 RcppExport SEXP bigalgebra_dadd_wrapper(SEXP ALPHASEXP, SEXP YSEXP, SEXP Y_isBMSEXP, SEXP SIGNSEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
     Rcpp::RNGScope __rngScope;
     Rcpp::traits::input_parameter< SEXP >::type ALPHA(ALPHASEXP);
     Rcpp::traits::input_parameter< SEXP >::type Y(YSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type Y_isBM(Y_isBMSEXP);
+    Rcpp::traits::input_parameter< bool >::type Y_isBM(Y_isBMSEXP);
     Rcpp::traits::input_parameter< SEXP >::type SIGN(SIGNSEXP);
     __result = Rcpp::wrap(dadd_wrapper(ALPHA, Y, Y_isBM, SIGN));
     return __result;
@@ -92,40 +92,40 @@ BEGIN_RCPP
 END_RCPP
 }
 // dgeemm_wrapper
-SEXP dgeemm_wrapper(SEXP X, SEXP Y, SEXP X_isBM);
+SEXP dgeemm_wrapper(SEXP X, SEXP Y, bool X_isBM);
 RcppExport SEXP bigalgebra_dgeemm_wrapper(SEXP XSEXP, SEXP YSEXP, SEXP X_isBMSEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
     Rcpp::RNGScope __rngScope;
     Rcpp::traits::input_parameter< SEXP >::type X(XSEXP);
     Rcpp::traits::input_parameter< SEXP >::type Y(YSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type X_isBM(X_isBMSEXP);
+    Rcpp::traits::input_parameter< bool >::type X_isBM(X_isBMSEXP);
     __result = Rcpp::wrap(dgeemm_wrapper(X, Y, X_isBM));
     return __result;
 END_RCPP
 }
 // dgeemd_wrapper
-SEXP dgeemd_wrapper(SEXP X, SEXP Y, SEXP X_isBM);
+SEXP dgeemd_wrapper(SEXP X, SEXP Y, bool X_isBM);
 RcppExport SEXP bigalgebra_dgeemd_wrapper(SEXP XSEXP, SEXP YSEXP, SEXP X_isBMSEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
     Rcpp::RNGScope __rngScope;
     Rcpp::traits::input_parameter< SEXP >::type X(XSEXP);
     Rcpp::traits::input_parameter< SEXP >::type Y(YSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type X_isBM(X_isBMSEXP);
+    Rcpp::traits::input_parameter< bool >::type X_isBM(X_isBMSEXP);
     __result = Rcpp::wrap(dgeemd_wrapper(X, Y, X_isBM));
     return __result;
 END_RCPP
 }
 // dgesmd_wrapper
-SEXP dgesmd_wrapper(SEXP A, SEXP Y, SEXP Y_isBM, int ALPHA_LHS);
+SEXP dgesmd_wrapper(SEXP A, SEXP Y, bool Y_isBM, int ALPHA_LHS);
 RcppExport SEXP bigalgebra_dgesmd_wrapper(SEXP ASEXP, SEXP YSEXP, SEXP Y_isBMSEXP, SEXP ALPHA_LHSSEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
     Rcpp::RNGScope __rngScope;
     Rcpp::traits::input_parameter< SEXP >::type A(ASEXP);
     Rcpp::traits::input_parameter< SEXP >::type Y(YSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type Y_isBM(Y_isBMSEXP);
+    Rcpp::traits::input_parameter< bool >::type Y_isBM(Y_isBMSEXP);
     Rcpp::traits::input_parameter< int >::type ALPHA_LHS(ALPHA_LHSSEXP);
     __result = Rcpp::wrap(dgesmd_wrapper(A, Y, Y_isBM, ALPHA_LHS));
     return __result;
@@ -248,40 +248,40 @@ BEGIN_RCPP
 END_RCPP
 }
 // cpp_isDiagonal
-SEXP cpp_isDiagonal(SEXP Y, SEXP Y_isBM);
+SEXP cpp_isDiagonal(SEXP Y, bool Y_isBM);
 RcppExport SEXP bigalgebra_cpp_isDiagonal(SEXP YSEXP, SEXP Y_isBMSEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
     Rcpp::RNGScope __rngScope;
     Rcpp::traits::input_parameter< SEXP >::type Y(YSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type Y_isBM(Y_isBMSEXP);
+    Rcpp::traits::input_parameter< bool >::type Y_isBM(Y_isBMSEXP);
     __result = Rcpp::wrap(cpp_isDiagonal(Y, Y_isBM));
     return __result;
 END_RCPP
 }
 // cpp_isTriangular
-LogicalVector cpp_isTriangular(SEXP Y, SEXP Y_isBM, LogicalVector upper_);
+LogicalVector cpp_isTriangular(SEXP Y, bool Y_isBM, LogicalVector upper_);
 RcppExport SEXP bigalgebra_cpp_isTriangular(SEXP YSEXP, SEXP Y_isBMSEXP, SEXP upper_SEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
     Rcpp::RNGScope __rngScope;
     Rcpp::traits::input_parameter< SEXP >::type Y(YSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type Y_isBM(Y_isBMSEXP);
+    Rcpp::traits::input_parameter< bool >::type Y_isBM(Y_isBMSEXP);
     Rcpp::traits::input_parameter< LogicalVector >::type upper_(upper_SEXP);
     __result = Rcpp::wrap(cpp_isTriangular(Y, Y_isBM, upper_));
     return __result;
 END_RCPP
 }
 // all_equal_cpp
-SEXP all_equal_cpp(SEXP X_, SEXP Y_, SEXP X_isBM, SEXP Y_isBM, SEXP tol_);
+SEXP all_equal_cpp(SEXP X_, SEXP Y_, bool X_isBM, bool Y_isBM, SEXP tol_);
 RcppExport SEXP bigalgebra_all_equal_cpp(SEXP X_SEXP, SEXP Y_SEXP, SEXP X_isBMSEXP, SEXP Y_isBMSEXP, SEXP tol_SEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
     Rcpp::RNGScope __rngScope;
     Rcpp::traits::input_parameter< SEXP >::type X_(X_SEXP);
     Rcpp::traits::input_parameter< SEXP >::type Y_(Y_SEXP);
-    Rcpp::traits::input_parameter< SEXP >::type X_isBM(X_isBMSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type Y_isBM(Y_isBMSEXP);
+    Rcpp::traits::input_parameter< bool >::type X_isBM(X_isBMSEXP);
+    Rcpp::traits::input_parameter< bool >::type Y_isBM(Y_isBMSEXP);
     Rcpp::traits::input_parameter< SEXP >::type tol_(tol_SEXP);
     __result = Rcpp::wrap(all_equal_cpp(X_, Y_, X_isBM, Y_isBM, tol_));
     return __result;
