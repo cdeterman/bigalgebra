@@ -1,3 +1,6 @@
+#' @useDynLib bigalgebra
+#' @import methods
+#' @importFrom bigmemory typeof filebacked.big.matrix deepcopy
 
 is_transposed = function( tcode )
 {
@@ -36,8 +39,6 @@ dcopy = function(N=NULL, X, INCX=1, Y, INCY=1)
     X.is.bm, Y.is.bm)
   return(0)
 }
-
-
 
 # QR factorization
 # return 0 if successful, -i if ith argument has illegal value

@@ -17,4 +17,3 @@
   options(bigalgebra.tempdir=c())
   options(bigalgebra.DEBUG=c())
 }
-

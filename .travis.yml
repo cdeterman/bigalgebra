@@ -1,0 +1,18 @@
+language: r
+sudo: required
+warnings_are_errors: false
+
+r_binary_packages:
+  - bigmemory
+  - BH
+  - assertive
+  - Rcpp
+  - RcppArmadillo
+  - testthat
+
+r_github_packages:
+  - jimhester/covr
+
+after_success:
+  - Rscript -e 'library(covr);coveralls()'
+

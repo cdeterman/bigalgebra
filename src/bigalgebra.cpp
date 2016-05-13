@@ -27,6 +27,8 @@
 //#define ARMA_64BIT_WORD
 //#define ARMA_BLAS_LONG_LONG
 
+#include <Rdefines.h>
+
 #include <RcppArmadillo.h>
 // [[Rcpp::depends(RcppArmadillo, BH, bigmemory)]]
 
@@ -234,30 +236,30 @@ daxpy_wrapper (SEXP N, SEXP A, SEXP X, SEXP Y, bool X_isBM)
 // [[Rcpp::export]]
 SEXP dpotrf_wrapper(SEXP UPLO, SEXP N, SEXP A, SEXP LDA, SEXP INFO, bool A_isBM)
 {
-  #ifdef NON_R_BLAS
-    SEXP ans;
-    const char *_UPLO = CHAR(Rf_asChar(UPLO));
-    INT _N = (INT)* (DOUBLE_DATA(N));
-    double *_A = make_double_ptr(A, A_isBM);
-    INT _LDA = (INT) *(DOUBLE_DATA(LDA));
-    INT _INFO = (INT) *(DOUBLE_DATA(INFO));
-    /* An example of an alternate C-blas interface (e.g., ACML) */
-    #ifdef CBLAS
-      dpotrf (_UPLO, &_N, _A, &_LDA, &_INFO);
-    #elif REFBLAS
+#ifdef NON_R_BLAS
+  SEXP ans;
+  const char *_UPLO = CHAR(Rf_asChar(UPLO));
+  INT _N = (INT)* (DOUBLE_DATA(N));
+  double *_A = make_double_ptr(A, A_isBM);
+  INT _LDA = (INT) *(DOUBLE_DATA(LDA));
+  INT _INFO = (INT) *(DOUBLE_DATA(INFO));
+  /* An example of an alternate C-blas interface (e.g., ACML) */
+  #ifdef CBLAS
+    dpotrf (_UPLO, &_N, _A, &_LDA, &_INFO);
+  #elif REFBLAS
     /* Standard Fortran interface without underscoring */
-      int8_dpotrf (_UPLO, &_N, _A, &_LDA, &_INFO);
-    #else
-      #error "BLAS format not supported"
-    #endif
-      PROTECT(ans = A);
-      Rf_unprotect(1);
-      return ans;
+    int8_dpotrf (_UPLO, &_N, _A, &_LDA, &_INFO);
+  #else
+    #error "BLAS format not supported"
+  #endif
+    PROTECT(ans = A);
+    Rf_unprotect(1);
+    return ans;
   #else
     
     // convert to armadillo matrix
     arma::mat Am( A_isBM ? ConvertBMtoArma(A) : as<arma::mat>(A) );
-
+    
     Am = arma::chol(Am);
     return A;
   #endif

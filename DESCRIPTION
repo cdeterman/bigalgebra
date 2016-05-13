@@ -1,27 +1,28 @@
 Package: bigalgebra
-Version: 0.8.4
-Date: 2014-04-15
-Title: BLAS routines for native R matrices and big.matrix objects.
-Author: Michael J. Kane, Bryan Lewis, and John W. Emerson
+Version: 0.8.6
+Date: 2015-10-21
+Title: BLAS Routines for Native R Matrices and 'big.matrix' objects
+Author: Michael J. Kane, Bryan Lewis, John W. Emerson, and Charles E. Determan Jr.
 Maintainer: Michael J. Kane <bigmemoryauthors@gmail.com>
-Imports: 
-  methods, 
-  Rcpp,
-  RcppArmadillo,
-  assertive
-Depends: 
-  bigmemory (>= 4.0.0)
-LinkingTo: 
-  Rcpp (>= 0.11.4),
-  RcppArmadillo,
-  BH, 
-  bigmemory
-Description: This package provides arithmetic functions for R matrix and big.matrix objects.
+Imports:
+    methods,
+    Rcpp,
+    RcppArmadillo,
+    assertive
+Depends:
+    bigmemory (>= 4.0.0)
+LinkingTo: Rcpp (>= 0.11.4),
+    RcppArmadillo,
+    BH,
+    bigmemory
+Description: Arithmetic functions for R matrix and big.matrix objects.
 License: LGPL-3 | Apache License 2.0
-Copyright: (C) 2014 Michael J. Kane, Bryan Lewis, and John W. Emerson
+Copyright: (C) 2015 Michael J. Kane, Bryan Lewis, and John W. Emerson
 URL: http://www.bigmemory.org
 Biarch: yes
 LazyLoad: yes
 Packaged: 2015-03-04 13:07:06 UTC; cdeterman
 NeedsComiplation: yes
-Suggests: testthat
+Suggests:
+    testthat
+RoxygenNote: 5.0.1
