@@ -278,19 +278,19 @@ SEXP dpotrf_wrapper(SEXP UPLO, SEXP N, SEXP A, SEXP LDA, SEXP INFO, bool A_isBM)
  */
 
 // [[Rcpp::export]]
-SEXP
-dadd_wrapper(SEXP ALPHA, SEXP Y, bool Y_isBM, SEXP SIGN) {
+void
+dadd_wrapper(
+  SEXP ALPHA, SEXP Y, SEXP S, 
+  bool Y_isBM) 
+  {
     // convert to arma matrices
     arma::mat Ym( Y_isBM ? ConvertBMtoArma(Y) : as<arma::mat>(Y) );
-
-
-    double SCALAR = Rcpp::as<double>(ALPHA);
-    int sign = Rcpp::as<int>(SIGN);
+    arma::mat Sm = ConvertBMtoArma(S);
+    
+    double alpha = as<double>(ALPHA);
     
     // RcppArmadillo Matrix Addition or Subtraction
-    Ym = sign * SCALAR + Ym;
-    
-    return Y;
+    Sm += alpha * Ym;
 }
 
 
@@ -423,17 +423,49 @@ t_inplace_wrapper (SEXP X, SEXP LOW_MEM){
     return X;
 }
 
+
+// Cross-product
+// [[Rcpp::export]]
+void
+cpp_bm_crossprod(
+  SEXP X, SEXP Y, SEXP Z, 
+  bool X_isBM, bool Y_isBM, bool Z_isBM){
+  
+  // convert to arma matrices
+  arma::mat Xm( X_isBM ? ConvertBMtoArma(X) : as<arma::mat>(X) );
+  arma::mat Ym( Y_isBM ? ConvertBMtoArma(Y) : as<arma::mat>(Y) );
+  arma::mat Zm( Z_isBM ? ConvertBMtoArma(Z) : as<arma::mat>(Z) );
+  
+  Zm = trans(Xm) * Ym;
+}
+
+// tCross-product
+// [[Rcpp::export]]
+void
+  cpp_bm_tcrossprod(
+    SEXP X, SEXP Y, SEXP Z, 
+    bool X_isBM, bool Y_isBM, bool Z_isBM){
+    
+    // convert to arma matrices
+    arma::mat Xm( X_isBM ? ConvertBMtoArma(X) : as<arma::mat>(X) );
+    arma::mat Ym( Y_isBM ? ConvertBMtoArma(Y) : as<arma::mat>(Y) );
+    arma::mat Zm( Z_isBM ? ConvertBMtoArma(Z) : as<arma::mat>(Z) );
+    
+    Zm = Xm * trans(Ym);
+  }
+
+
 // Power
 // [[Rcpp::export]]
 SEXP
 dgepow_wrapper(SEXP EXP, SEXP Y) {
-    // Y will always be a big.matrix
-    arma::mat Ym = ConvertBMtoArma(Y);
-      
-    // RcppArmadillo Element-wise Scalar Division
-    Ym = pow(Ym, Rcpp::as<double>(EXP));
-    
-    return Y;
+  // Y will always be a big.matrix
+  arma::mat Ym = ConvertBMtoArma(Y);
+  
+  // RcppArmadillo Element-wise Scalar Division
+  Ym = pow(Ym, Rcpp::as<double>(EXP));
+  
+  return Y;
 }
 
 

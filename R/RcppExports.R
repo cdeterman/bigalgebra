@@ -17,8 +17,8 @@ dpotrf_wrapper <- function(UPLO, N, A, LDA, INFO, A_isBM) {
     .Call('bigalgebra_dpotrf_wrapper', PACKAGE = 'bigalgebra', UPLO, N, A, LDA, INFO, A_isBM)
 }
 
-dadd_wrapper <- function(ALPHA, Y, Y_isBM, SIGN) {
-    .Call('bigalgebra_dadd_wrapper', PACKAGE = 'bigalgebra', ALPHA, Y, Y_isBM, SIGN)
+dadd_wrapper <- function(ALPHA, Y, S, Y_isBM) {
+    invisible(.Call('bigalgebra_dadd_wrapper', PACKAGE = 'bigalgebra', ALPHA, Y, S, Y_isBM))
 }
 
 dgeqrf_wrapper <- function(Y, Q, R) {
@@ -52,6 +52,14 @@ t_wrapper <- function(X, Y) {
 #' @param LOW_MEM boolean option to choose slower, low memory option
 t_inplace_wrapper <- function(X, LOW_MEM) {
     .Call('bigalgebra_t_inplace_wrapper', PACKAGE = 'bigalgebra', X, LOW_MEM)
+}
+
+cpp_bm_crossprod <- function(X, Y, Z, X_isBM, Y_isBM, Z_isBM) {
+    invisible(.Call('bigalgebra_cpp_bm_crossprod', PACKAGE = 'bigalgebra', X, Y, Z, X_isBM, Y_isBM, Z_isBM))
+}
+
+cpp_bm_tcrossprod <- function(X, Y, Z, X_isBM, Y_isBM, Z_isBM) {
+    invisible(.Call('bigalgebra_cpp_bm_tcrossprod', PACKAGE = 'bigalgebra', X, Y, Z, X_isBM, Y_isBM, Z_isBM))
 }
 
 dgepow_wrapper <- function(EXP, Y) {

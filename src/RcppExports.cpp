@@ -65,17 +65,16 @@ BEGIN_RCPP
 END_RCPP
 }
 // dadd_wrapper
-SEXP dadd_wrapper(SEXP ALPHA, SEXP Y, bool Y_isBM, SEXP SIGN);
-RcppExport SEXP bigalgebra_dadd_wrapper(SEXP ALPHASEXP, SEXP YSEXP, SEXP Y_isBMSEXP, SEXP SIGNSEXP) {
+void dadd_wrapper(SEXP ALPHA, SEXP Y, SEXP S, bool Y_isBM);
+RcppExport SEXP bigalgebra_dadd_wrapper(SEXP ALPHASEXP, SEXP YSEXP, SEXP SSEXP, SEXP Y_isBMSEXP) {
 BEGIN_RCPP
-    Rcpp::RObject __result;
     Rcpp::RNGScope __rngScope;
     Rcpp::traits::input_parameter< SEXP >::type ALPHA(ALPHASEXP);
     Rcpp::traits::input_parameter< SEXP >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type S(SSEXP);
     Rcpp::traits::input_parameter< bool >::type Y_isBM(Y_isBMSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type SIGN(SIGNSEXP);
-    __result = Rcpp::wrap(dadd_wrapper(ALPHA, Y, Y_isBM, SIGN));
-    return __result;
+    dadd_wrapper(ALPHA, Y, S, Y_isBM);
+    return R_NilValue;
 END_RCPP
 }
 // dgeqrf_wrapper
@@ -153,6 +152,36 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type LOW_MEM(LOW_MEMSEXP);
     __result = Rcpp::wrap(t_inplace_wrapper(X, LOW_MEM));
     return __result;
+END_RCPP
+}
+// cpp_bm_crossprod
+void cpp_bm_crossprod(SEXP X, SEXP Y, SEXP Z, bool X_isBM, bool Y_isBM, bool Z_isBM);
+RcppExport SEXP bigalgebra_cpp_bm_crossprod(SEXP XSEXP, SEXP YSEXP, SEXP ZSEXP, SEXP X_isBMSEXP, SEXP Y_isBMSEXP, SEXP Z_isBMSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< SEXP >::type X(XSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type Z(ZSEXP);
+    Rcpp::traits::input_parameter< bool >::type X_isBM(X_isBMSEXP);
+    Rcpp::traits::input_parameter< bool >::type Y_isBM(Y_isBMSEXP);
+    Rcpp::traits::input_parameter< bool >::type Z_isBM(Z_isBMSEXP);
+    cpp_bm_crossprod(X, Y, Z, X_isBM, Y_isBM, Z_isBM);
+    return R_NilValue;
+END_RCPP
+}
+// cpp_bm_tcrossprod
+void cpp_bm_tcrossprod(SEXP X, SEXP Y, SEXP Z, bool X_isBM, bool Y_isBM, bool Z_isBM);
+RcppExport SEXP bigalgebra_cpp_bm_tcrossprod(SEXP XSEXP, SEXP YSEXP, SEXP ZSEXP, SEXP X_isBMSEXP, SEXP Y_isBMSEXP, SEXP Z_isBMSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< SEXP >::type X(XSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type Z(ZSEXP);
+    Rcpp::traits::input_parameter< bool >::type X_isBM(X_isBMSEXP);
+    Rcpp::traits::input_parameter< bool >::type Y_isBM(Y_isBMSEXP);
+    Rcpp::traits::input_parameter< bool >::type Z_isBM(Z_isBMSEXP);
+    cpp_bm_tcrossprod(X, Y, Z, X_isBM, Y_isBM, Z_isBM);
+    return R_NilValue;
 END_RCPP
 }
 // dgepow_wrapper

@@ -1,5 +1,5 @@
 Package: bigalgebra
-Version: 0.8.6
+Version: 0.9.0
 Date: 2015-10-21
 Title: BLAS Routines for Native R Matrices and 'big.matrix' objects
 Author: Michael J. Kane, Bryan Lewis, John W. Emerson, and Charles E. Determan Jr.

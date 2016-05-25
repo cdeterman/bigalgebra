@@ -93,8 +93,14 @@ setMethod("Arith",c(e1="numeric", e2="big.matrix"),
       if (op=="*") 
         return(daxpy(e1,e2))
       return(switch(op,
-        `+` = dadd(e2,e1,1),
-        `-` = dadd(e2,e1,-1),
+        `+` = {
+          e1 <- anon_matrix(nrow(e2), ncol(e2), val = e1)
+          daxpy(1.0,e1,e2)
+        },
+        `-` = {
+          e1 <- anon_matrix(nrow(e2), ncol(e2), val = e1)
+          daxpy(-1.0,e2,e1)
+        },
         `/` = dgesmd(e2, e1, 1),
         stop("Undefined operation")
       ))
@@ -112,8 +118,14 @@ setMethod("Arith",c(e1="big.matrix", e2="numeric"),
       if( op=="*") 
         return(daxpy(e2,e1))
       return(switch(op,
-        `+` = dadd(e1,e2,1),
-        `-` = dadd(e1,e2,-1),
+        `+` = {
+          e2 <- anon_matrix(nrow(e1), ncol(e1), val = e2)
+          daxpy(1.0,e1,e2)
+        },
+        `-` = {
+          e2 <- anon_matrix(nrow(e1), ncol(e1), val = e2)
+          daxpy(-1.0,e2,e1)
+        },
         `^` = dgepow(e1, e2),
         `/` = dgesmd(e1, e2, 0),
         stop("Undefined operation")
@@ -174,6 +186,49 @@ t.big.matrix <-
   function(x){
     transposeBM(x)
   }
+
+#' @title big.matrix crossproduct
+#' @description Return the matrix cross-product of two conformable
+#' big.matrix objects.  This is equivalent to t(x) %*% y (crossprod)
+#' or x %*% t(t) (tcrossprod) but faster as no data transfer between
+#' device and host is required.
+#' @param x A big.matrix
+#' @param y A big.matrix
+#' @return A big.matrix
+#' @author Charles Determan Jr.
+#' @docType methods
+#' @rdname big.matrix-crossprod
+#' @aliases crossprod,big.matrix
+#' @export
+setMethod("crossprod",
+          signature(x = "big.matrix", y = "missing"),
+          function(x, y){
+            bm_crossprod(x, x)
+          })
+
+#' @rdname big.matrix-crossprod
+#' @export
+setMethod("crossprod",
+          signature(x = "big.matrix", y = "big.matrix"),
+          function(x, y){
+            bm_crossprod(x, y)
+          })
+
+#' @rdname big.matrix-crossprod
+setMethod("tcrossprod",
+          signature(x = "big.matrix", y = "missing"),
+          function(x, y){
+            bm_tcrossprod(x, x)
+          })
+
+
+#' @rdname big.matrix-crossprod
+#' @export
+setMethod("tcrossprod",
+          signature(x = "big.matrix", y = "big.matrix"),
+          function(x, y){
+            bm_tcrossprod(x, y)
+          })
 
 #' @title all.equal
 #' @description all.equal method for comparing elements between big.matrix and

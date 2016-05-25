@@ -39,12 +39,20 @@ test_that("matrix addition successful", {
 })
 
 test_that("matrix subtraction successful", {
-  R_mat_s <- mat - 1
+  
   R_mat_m <- mat - mat
-  BM_mat_s <- bm - 1
   BM_mat_m <- bm - bm
-  expect_equivalent(R_mat_s, BM_mat_s[,])
   expect_equivalent(R_mat_m, BM_mat_m[,])
+})
+
+test_that("matrix scalar subtraction successful", {
+  R_mat_s <- mat - 1
+  R_mat_s2 <- 1 - mat
+  BM_mat_s <- bm - 1
+  BM_mat_s2 <- 1 - bm
+  
+  expect_equivalent(R_mat_s, BM_mat_s[,])
+  expect_equivalent(R_mat_s2, BM_mat_s2[,])
 })
 
 test_that("scalar matrix mutliplication successful", {
@@ -143,4 +151,53 @@ test_that("eigen method works", {
   # eigen vectors signs are irrelevant so ignore with abs
   expect_equivalent(abs(mat_eig_full$vectors), abs(BM_eig_full$vectors[]))
 })
+
+test_that("crossprod method", {
+  
+  X <- matrix(rnorm(10), nrow=2)
+  Y <- matrix(rnorm(10), nrow=2)
+  Z <- matrix(rnorm(10), nrow=5)
+  
+  C <- crossprod(X,Y)
+  Cs <- crossprod(X)
+  
+  Xbm <- as.big.matrix(X)
+  Ybm <- as.big.matrix(Y)
+  Zbm <- as.big.matrix(Z)
+  
+  Cbm <- crossprod(Xbm, Ybm)
+  Csbm <- crossprod(Xbm)
+  
+  expect_is(Cbm, "big.matrix")
+  expect_equal(Cbm[,], C, tolerance=.Machine$double.eps ^ 0.5, 
+               info="big.matrix elements not equivalent")  
+  expect_equal(Csbm[,], Cs, tolerance=.Machine$double.eps ^ 0.5, 
+               info="big.matrix elements not equivalent") 
+  expect_error(crossprod(Xbm, Zbm))
+})
+
+test_that("tcrossprod method", {
+  
+  X <- matrix(rnorm(10), nrow=5)
+  Y <- matrix(rnorm(10), nrow=5)
+  Z <- matrix(rnorm(15), nrow=5)
+  
+  C <- tcrossprod(X,Y)
+  Cs <- tcrossprod(X)
+  
+  Xbm <- as.big.matrix(X)
+  Ybm <- as.big.matrix(Y)
+  Zbm <- as.big.matrix(Z)
+  
+  Cbm <- tcrossprod(Xbm, Ybm)
+  Csbm <- tcrossprod(Xbm)
+  
+  expect_is(Cbm, "big.matrix")
+  expect_equal(Cbm[,], C, tolerance=.Machine$double.eps ^ 0.5, 
+               info="big.matrix elements not equivalent")  
+  expect_equal(Csbm[,], Cs, tolerance=.Machine$double.eps ^ 0.5, 
+               info="big.matrix elements not equivalent") 
+  expect_error(tcrossprod(Xbm, Zbm))
+})
+
 

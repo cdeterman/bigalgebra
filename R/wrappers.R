@@ -94,12 +94,13 @@ daxpy = function(A=1, X, Y, LHS=1)
 
 # Add a scalar to each element of a matrix
 # Y := Y+SIGN*ALPHA 
-dadd = function(Y, ALPHA, SIGN)
+dadd = function(Y, X, ALPHA)
 {
   if (!is.numeric(ALPHA) || length(ALPHA) != 1)
     stop("ALPHA is not a scalar numeric value")
 
   Y.is.bm = check_matrix(Y)
+  X.is.bm = check_matrix(X)
   
   D = dim(Y)
   M = D[1]
@@ -108,8 +109,8 @@ dadd = function(Y, ALPHA, SIGN)
   Z <- anon_matrix(M,N,val=0.0)
   Z[] <- Y[]
   
-  dadd_wrapper(as.double(ALPHA), Z, Y.is.bm, SIGN)  
-  return(Z)
+  dadd_wrapper(as.double(ALPHA), Z, S, Y.is.bm)  
+  return(S)
 }
 
 
@@ -286,6 +287,36 @@ transposeBM = function(X){
   ans <- t_wrapper(X,Y)
   
   return(ans)
+}
+
+# crosspord
+bm_crossprod <- function(X, Y){
+  if(nrow(X) != nrow(Y)){
+    stop("matrices non-conformable")
+  }
+  
+  Z <- anon_matrix(ncol(X), ncol(Y), val=0.0)
+  cpp_bm_crossprod(X,Y,Z, 
+                   is.big.matrix(X),
+                   is.big.matrix(Y),
+                   is.big.matrix(Z))
+  
+  return(Z)
+}
+
+# tcrosspord
+bm_tcrossprod <- function(X, Y){
+  if(ncol(X) != ncol(Y)){
+    stop("matrices non-conformable")
+  }
+  
+  Z <- anon_matrix(nrow(X), nrow(Y), val=0.0)
+  cpp_bm_tcrossprod(X,Y,Z, 
+                   is.big.matrix(X),
+                   is.big.matrix(Y),
+                   is.big.matrix(Z))
+  
+  return(Z)
 }
 
 # possible in-place function
