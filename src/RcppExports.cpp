@@ -48,6 +48,17 @@ BEGIN_RCPP
     return __result;
 END_RCPP
 }
+// daxpy_unary_wrapper
+void daxpy_unary_wrapper(SEXP X, bool X_isBM);
+RcppExport SEXP bigalgebra_daxpy_unary_wrapper(SEXP XSEXP, SEXP X_isBMSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< SEXP >::type X(XSEXP);
+    Rcpp::traits::input_parameter< bool >::type X_isBM(X_isBMSEXP);
+    daxpy_unary_wrapper(X, X_isBM);
+    return R_NilValue;
+END_RCPP
+}
 // dpotrf_wrapper
 SEXP dpotrf_wrapper(SEXP UPLO, SEXP N, SEXP A, SEXP LDA, SEXP INFO, bool A_isBM);
 RcppExport SEXP bigalgebra_dpotrf_wrapper(SEXP UPLOSEXP, SEXP NSEXP, SEXP ASEXP, SEXP LDASEXP, SEXP INFOSEXP, SEXP A_isBMSEXP) {

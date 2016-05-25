@@ -234,6 +234,20 @@ daxpy_wrapper (SEXP N, SEXP A, SEXP X, SEXP Y, bool X_isBM)
 }
   
 // [[Rcpp::export]]
+void
+daxpy_unary_wrapper (SEXP X, bool X_isBM)
+{
+  /* RcppArmadillo 'BLAS' implementation */
+  
+  // convert to arma matrices
+  arma::mat Xm( X_isBM ? ConvertBMtoArma(X) : as<arma::mat>(X) );
+  arma::mat Zm = arma::zeros<arma::mat>(Xm.n_rows,Xm.n_cols);
+  
+  Zm -= Xm;
+  Xm = Zm;
+}
+  
+// [[Rcpp::export]]
 SEXP dpotrf_wrapper(SEXP UPLO, SEXP N, SEXP A, SEXP LDA, SEXP INFO, bool A_isBM)
 {
 #ifdef NON_R_BLAS

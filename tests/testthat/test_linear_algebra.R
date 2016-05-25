@@ -55,6 +55,13 @@ test_that("matrix scalar subtraction successful", {
   expect_equivalent(R_mat_s2, BM_mat_s2[,])
 })
 
+test_that("matrix unary subtraction successful", {
+  R_mat_s <- -mat
+  BM_mat_s <- -bm
+  
+  expect_equivalent(R_mat_s, BM_mat_s[,])
+})
+
 test_that("scalar matrix mutliplication successful", {
   R_mat <- 3 * mat
   BM_mat_sm <- 3 * bm

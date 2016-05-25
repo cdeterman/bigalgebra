@@ -92,6 +92,16 @@ daxpy = function(A=1, X, Y, LHS=1)
   ans
 }
 
+unary_axpy <- function(X){
+  X.is.bm = check_matrix(X)
+  
+  Z = anon_matrix(nrow(X),ncol(X),val=0.0)
+  Z[] = X[]
+  
+  daxpy_unary_wrapper(Z, X.is.bm)
+  return(Z)
+}
+
 # Add a scalar to each element of a matrix
 # Y := Y+SIGN*ALPHA 
 dadd = function(Y, X, ALPHA)

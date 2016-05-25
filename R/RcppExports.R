@@ -13,6 +13,10 @@ daxpy_wrapper <- function(N, A, X, Y, X_isBM) {
     .Call('bigalgebra_daxpy_wrapper', PACKAGE = 'bigalgebra', N, A, X, Y, X_isBM)
 }
 
+daxpy_unary_wrapper <- function(X, X_isBM) {
+    invisible(.Call('bigalgebra_daxpy_unary_wrapper', PACKAGE = 'bigalgebra', X, X_isBM))
+}
+
 dpotrf_wrapper <- function(UPLO, N, A, LDA, INFO, A_isBM) {
     .Call('bigalgebra_dpotrf_wrapper', PACKAGE = 'bigalgebra', UPLO, N, A, LDA, INFO, A_isBM)
 }

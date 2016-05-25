@@ -135,6 +135,20 @@ setMethod("Arith",c(e1="big.matrix", e2="numeric"),
   }
 )
 
+
+#' @export
+setMethod("Arith", c(e1="big.matrix", e2="missing"),
+          function(e1, e2)
+          {
+            op = .Generic[[1]]
+            switch(op,
+                   `-` = unary_axpy(e1),
+                   stop("undefined operation")
+            )
+          },
+          valueClass = "gpuMatrix"
+)
+
 #' @export
 setMethod("Math", c(x="big.matrix"),
           function(x)
